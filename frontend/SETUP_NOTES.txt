@@ -1,0 +1,3 @@
+import { FormsModule } from '@angular/forms';
+
+// Fix for layout component - add FormsModule

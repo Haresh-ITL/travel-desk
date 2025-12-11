@@ -41,5 +41,7 @@ authRouter.post("/login", async (req, res) => {
   const ok = await bcrypt.compare(password, user.password);
   if (!ok) return res.status(400).json({ message: "Invalid credentials" });
 
-  res.json({ uuid: user.uuid, roleId: user.roleId });
+  const role = await Role.findOne({ uuid: user.roleId });
+
+  res.json({ uuid: user.uuid, roleId: user.roleId, roleName:role?.name });
 });

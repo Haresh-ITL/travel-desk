@@ -1,0 +1,128 @@
+<div class="bookings-container">
+  <h1>Booking Management</h1>
+
+  <div class="bookings-layout">
+    <div class="left-panel">
+      <h2>Approved Requests</h2>
+      <div class="table-container">
+        <table mat-table [dataSource]="approvedRequests" class="bookings-table">
+          <ng-container matColumnDef="employeeName">
+            <th mat-header-cell *matHeaderCellDef>Employee</th>
+            <td mat-cell *matCellDef="let request">{{ request.employeeName }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="from">
+            <th mat-header-cell *matHeaderCellDef>From</th>
+            <td mat-cell *matCellDef="let request">{{ request.from }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="to">
+            <th mat-header-cell *matHeaderCellDef>To</th>
+            <td mat-cell *matCellDef="let request">{{ request.to }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="startDate">
+            <th mat-header-cell *matHeaderCellDef>Start</th>
+            <td mat-cell *matCellDef="let request">{{ formatDate(request.startDate) }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="endDate">
+            <th mat-header-cell *matHeaderCellDef>End</th>
+            <td mat-cell *matCellDef="let request">{{ formatDate(request.endDate) }}</td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;" 
+              (click)="selectRequest(row)" 
+              [class.selected-row]="selectedRequest?.uuid === row.uuid"
+              class="clickable-row"></tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="right-panel" *ngIf="selectedRequest">
+      <mat-tab-group>
+        <mat-tab label="Flight Details">
+          <div class="tab-content">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Airline</mat-label>
+              <input matInput [(ngModel)]="booking.flightAirline">
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Flight Number</mat-label>
+              <input matInput [(ngModel)]="booking.flightNumber">
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Departure Airport</mat-label>
+              <input matInput [(ngModel)]="booking.flightDepartureAirport">
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Arrival Airport</mat-label>
+              <input matInput [(ngModel)]="booking.flightArrivalAirport">
+            </mat-form-field>
+          </div>
+        </mat-tab>
+
+        <mat-tab label="Hotel Details">
+          <div class="tab-content">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Hotel Name</mat-label>
+              <input matInput [(ngModel)]="booking.hotelName">
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Location</mat-label>
+              <input matInput [(ngModel)]="booking.hotelLocation">
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Hotel Amount (₹)</mat-label>
+              <input matInput type="number" [(ngModel)]="booking.hotelAmount">
+            </mat-form-field>
+          </div>
+        </mat-tab>
+
+        <mat-tab label="Cab Details">
+          <div class="tab-content">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Provider</mat-label>
+              <input matInput [(ngModel)]="booking.cabProvider">
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Notes</mat-label>
+              <textarea matInput [(ngModel)]="booking.cabNotes" rows="3"></textarea>
+            </mat-form-field>
+          </div>
+        </mat-tab>
+
+        <mat-tab label="Payment">
+          <div class="tab-content">
+            <mat-card class="payment-card">
+              <h3><mat-icon>payment</mat-icon> Stripe Test Payment</h3>
+              <p>Amount: ₹{{ booking.hotelAmount || 0 }}</p>
+              <p class="test-note">Test Mode: Use card 4242 4242 4242 4242</p>
+              <button mat-raised-button color="primary" (click)="processPayment()">
+                <mat-icon>credit_card</mat-icon>
+                Pay Now
+              </button>
+            </mat-card>
+          </div>
+        </mat-tab>
+
+        <mat-tab label="Itinerary">
+          <div class="tab-content">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Itinerary HTML</mat-label>
+              <textarea matInput [(ngModel)]="booking.itineraryHtml" rows="10"></textarea>
+            </mat-form-field>
+          </div>
+        </mat-tab>
+      </mat-tab-group>
+
+      <div class="actions">
+        <button mat-raised-button color="primary" (click)="saveBooking()">
+          <mat-icon>save</mat-icon>
+          Save Booking
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

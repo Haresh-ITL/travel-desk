@@ -1,0 +1,143 @@
+.users-container {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.users-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+
+  h1 {
+    margin: 0;
+    font-size: 28px;
+    font-weight: 600;
+  }
+
+  button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+}
+
+.users-toolbar {
+  margin-bottom: 24px;
+
+  .search-field {
+    width: 100%;
+    max-width: 400px;
+  }
+}
+
+.users-sidenav-container {
+  height: calc(100vh - 300px);
+  min-height: 500px;
+}
+
+.table-container {
+  overflow: auto;
+  max-height: 100%;
+}
+
+.users-table {
+  width: 100%;
+
+  .clickable-row {
+    cursor: pointer;
+    transition: background-color 0.2s;
+
+    &:hover {
+      background-color: rgba(0, 0, 0, 0.04);
+    }
+  }
+}
+
+.drawer-content {
+  width: 400px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.drawer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e0e0e0;
+
+  h2 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+  }
+}
+
+.drawer-body {
+  flex: 1;
+
+  .detail-item {
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    .label {
+      font-size: 12px;
+      color: #718096;
+      font-weight: 500;
+      text-transform: uppercase;
+    }
+
+    .value {
+      font-size: 16px;
+      color: #1a202c;
+      font-weight: 500;
+    }
+  }
+}
+
+.drawer-actions {
+  padding-top: 16px;
+  border-top: 1px solid #e0e0e0;
+
+  button {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+}
+
+:host-context(.dark-theme) {
+  .users-header h1 {
+    color: #f7fafc;
+  }
+
+  .drawer-header {
+    border-bottom-color: #4a5568;
+
+    h2 {
+      color: #f7fafc;
+    }
+  }
+
+  .drawer-body .detail-item {
+    .label {
+      color: #a0aec0;
+    }
+
+    .value {
+      color: #f7fafc;
+    }
+  }
+
+  .drawer-actions {
+    border-top-color: #4a5568;
+  }
+}

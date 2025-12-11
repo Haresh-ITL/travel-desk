@@ -1,69 +1,49 @@
-import { Component, Input } from '@angular/core';
+import { Component, Inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { MatCardModule } from '@angular/material/card';
-import { MatIconModule } from '@angular/material/icon';
+import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatCardModule } from '@angular/material/card';
+import { MatDividerModule } from '@angular/material/divider';
+import { ItineraryData } from '../../models';
 
 @Component({
   selector: 'app-itinerary-viewer',
   standalone: true,
-  imports: [CommonModule, MatCardModule, MatIconModule, MatButtonModule],
-  template: `
-    <mat-card class="itinerary-card">
-      <mat-card-header>
-        <mat-card-title>{{ employeeName }} - {{ from }} to {{ to }}</mat-card-title>
-        <mat-card-subtitle>{{ startDate | date }} - {{ endDate | date }}</mat-card-subtitle>
-      </mat-card-header>
-      <mat-card-content>
-        <div [innerHTML]="itineraryHtml" class="itinerary-content"></div>
-      </mat-card-content>
-      <mat-card-actions>
-        <button mat-button color="primary" (click)="printItinerary()">
-          <mat-icon>print</mat-icon>
-          Print
-        </button>
-      </mat-card-actions>
-    </mat-card>
-  `,
-  styles: [`
-    .itinerary-card {
-      max-width: 800px;
-      margin: 20px auto;
-    }
-    .itinerary-content {
-      margin-top: 16px;
-    }
-  `]
+  imports: [
+    CommonModule,
+    MatDialogModule,
+    MatButtonModule,
+    MatIconModule,
+    MatCardModule,
+    MatDividerModule
+  ],
+  templateUrl: './itinerary-viewer.component.html',
+  styleUrls: ['./itinerary-viewer.component.scss']
 })
 export class ItineraryViewerComponent {
-  @Input() employeeName = '';
-  @Input() from = '';
-  @Input() to = '';
-  @Input() startDate = '';
-  @Input() endDate = '';
-  @Input() itineraryHtml = '';
+  constructor(
+    @Inject(MAT_DIALOG_DATA) public data: ItineraryData,
+    private dialogRef: MatDialogRef<ItineraryViewerComponent>
+  ) {}
 
-  printItinerary(): void {
-    const printWindow = window.open('', '_blank');
-    if (printWindow) {
-      printWindow.document.write(`
-        <html>
-          <head>
-            <title>Itinerary</title>
-            <style>
-              body { font-family: Arial, sans-serif; margin: 20px; }
-              h1 { color: #1976d2; }
-            </style>
-          </head>
-          <body>
-            <h1>${this.employeeName} - ${this.from} to ${this.to}</h1>
-            <p>${this.startDate} - ${this.endDate}</p>
-            ${this.itineraryHtml}
-          </body>
-        </html>
-      `);
-      printWindow.document.close();
-      printWindow.print();
-    }
+  close(): void {
+    this.dialogRef.close();
+  }
+
+  formatDate(date: Date): string {
+    return new Date(date).toLocaleDateString('en-US', { 
+      weekday: 'short', 
+      year: 'numeric', 
+      month: 'short', 
+      day: 'numeric' 
+    });
+  }
+
+  formatTime(date: Date): string {
+    return new Date(date).toLocaleTimeString('en-US', { 
+      hour: '2-digit', 
+      minute: '2-digit' 
+    });
   }
 }

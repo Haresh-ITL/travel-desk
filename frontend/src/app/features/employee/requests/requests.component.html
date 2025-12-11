@@ -1,0 +1,124 @@
+<div class="requests-container">
+  <div class="requests-header">
+    <h1>My Travel Requests</h1>
+    <button mat-raised-button color="primary">
+      <mat-icon>add</mat-icon>
+      New Request
+    </button>
+  </div>
+
+  <div class="requests-toolbar">
+    <mat-form-field appearance="outline" class="search-field">
+      <mat-label>Search requests</mat-label>
+      <input matInput [(ngModel)]="searchText" (ngModelChange)="applyFilter()" placeholder="Destination or status">
+      <mat-icon matPrefix>search</mat-icon>
+    </mat-form-field>
+  </div>
+
+  <mat-sidenav-container class="requests-sidenav-container">
+    <mat-sidenav-content>
+      <div class="table-container">
+        <table mat-table [dataSource]="filteredRequests" class="requests-table">
+          <ng-container matColumnDef="from">
+            <th mat-header-cell *matHeaderCellDef>From</th>
+            <td mat-cell *matCellDef="let request">{{ request.from }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="to">
+            <th mat-header-cell *matHeaderCellDef>To</th>
+            <td mat-cell *matCellDef="let request">{{ request.to }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="travelType">
+            <th mat-header-cell *matHeaderCellDef>Type</th>
+            <td mat-cell *matCellDef="let request">{{ request.travelType }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="startDate">
+            <th mat-header-cell *matHeaderCellDef>Start Date</th>
+            <td mat-cell *matCellDef="let request">{{ formatDate(request.startDate) }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="endDate">
+            <th mat-header-cell *matHeaderCellDef>End Date</th>
+            <td mat-cell *matCellDef="let request">{{ formatDate(request.endDate) }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef>Status</th>
+            <td mat-cell *matCellDef="let request">
+              <mat-chip [color]="getStatusColor(request.status)" highlighted>
+                {{ request.status }}
+              </mat-chip>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef>Actions</th>
+            <td mat-cell *matCellDef="let request">
+              <button mat-icon-button (click)="selectRequest(request)" matTooltip="View Details">
+                <mat-icon>visibility</mat-icon>
+              </button>
+              <button mat-icon-button (click)="viewItinerary(request)" 
+                      *ngIf="request.status === RequestStatus.BOOKED" matTooltip="View Itinerary">
+                <mat-icon>confirmation_number</mat-icon>
+              </button>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;" (click)="selectRequest(row)" class="clickable-row"></tr>
+        </table>
+      </div>
+    </mat-sidenav-content>
+
+    <mat-sidenav #drawer position="end" mode="over" [opened]="!!selectedRequest" (closed)="closeDrawer()">
+      <div class="drawer-content" *ngIf="selectedRequest">
+        <div class="drawer-header">
+          <h2>Request Details</h2>
+          <button mat-icon-button (click)="closeDrawer()">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+        <div class="drawer-body">
+          <div class="detail-item">
+            <span class="label">From:</span>
+            <span class="value">{{ selectedRequest.from }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">To:</span>
+            <span class="value">{{ selectedRequest.to }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Travel Type:</span>
+            <span class="value">{{ selectedRequest.travelType }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Start Date:</span>
+            <span class="value">{{ formatDate(selectedRequest.startDate) }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">End Date:</span>
+            <span class="value">{{ formatDate(selectedRequest.endDate) }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Purpose:</span>
+            <span class="value">{{ selectedRequest.purpose }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Status:</span>
+            <mat-chip [color]="getStatusColor(selectedRequest.status)" highlighted>
+              {{ selectedRequest.status }}
+            </mat-chip>
+          </div>
+        </div>
+        <div class="drawer-actions" *ngIf="selectedRequest.status === RequestStatus.BOOKED">
+          <button mat-raised-button color="primary" (click)="viewItinerary(selectedRequest)">
+            <mat-icon>confirmation_number</mat-icon>
+            View Itinerary
+          </button>
+        </div>
+      </div>
+    </mat-sidenav>
+  </mat-sidenav-container>
+</div>

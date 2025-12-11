@@ -1,0 +1,137 @@
+<div class="itinerary-container">
+  <div class="itinerary-header">
+    <div class="header-content">
+      <mat-icon class="header-icon">confirmation_number</mat-icon>
+      <div class="header-text">
+        <h1>Travel Itinerary</h1>
+        <p>{{ data.employeeName }}</p>
+      </div>
+    </div>
+    <button mat-icon-button (click)="close()" class="close-button">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <div class="trip-summary">
+    <div class="summary-item">
+      <mat-icon>flight_takeoff</mat-icon>
+      <div>
+        <span class="label">From</span>
+        <span class="value">{{ data.from }}</span>
+      </div>
+    </div>
+    <mat-icon class="arrow-icon">arrow_forward</mat-icon>
+    <div class="summary-item">
+      <mat-icon>flight_land</mat-icon>
+      <div>
+        <span class="label">To</span>
+        <span class="value">{{ data.to }}</span>
+      </div>
+    </div>
+    <div class="summary-item">
+      <mat-icon>date_range</mat-icon>
+      <div>
+        <span class="label">Duration</span>
+        <span class="value">{{ formatDate(data.startDate) }} - {{ formatDate(data.endDate) }}</span>
+      </div>
+    </div>
+  </div>
+
+  <mat-divider></mat-divider>
+
+  <div class="itinerary-details">
+    <mat-card *ngIf="data.flightDetails" class="detail-card flight-card">
+      <div class="card-header">
+        <mat-icon>flight</mat-icon>
+        <h3>Flight Details</h3>
+      </div>
+      <div class="card-content">
+        <div class="detail-row">
+          <span class="detail-label">Airline:</span>
+          <span class="detail-value">{{ data.flightDetails.airline }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Flight Number:</span>
+          <span class="detail-value">{{ data.flightDetails.flightNumber }}</span>
+        </div>
+        <div class="flight-route">
+          <div class="route-point">
+            <mat-icon>flight_takeoff</mat-icon>
+            <div>
+              <div class="airport">{{ data.flightDetails.departureAirport }}</div>
+              <div class="time">{{ formatTime(data.flightDetails.departureTime) }}</div>
+            </div>
+          </div>
+          <div class="route-line"></div>
+          <div class="route-point">
+            <mat-icon>flight_land</mat-icon>
+            <div>
+              <div class="airport">{{ data.flightDetails.arrivalAirport }}</div>
+              <div class="time">{{ formatTime(data.flightDetails.arrivalTime) }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </mat-card>
+
+    <mat-card *ngIf="data.hotelDetails" class="detail-card hotel-card">
+      <div class="card-header">
+        <mat-icon>hotel</mat-icon>
+        <h3>Hotel Details</h3>
+      </div>
+      <div class="card-content">
+        <div class="detail-row">
+          <span class="detail-label">Hotel:</span>
+          <span class="detail-value">{{ data.hotelDetails.name }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Location:</span>
+          <span class="detail-value">{{ data.hotelDetails.location }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Check-in:</span>
+          <span class="detail-value">{{ formatDate(data.hotelDetails.checkin) }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Check-out:</span>
+          <span class="detail-value">{{ formatDate(data.hotelDetails.checkout) }}</span>
+        </div>
+      </div>
+    </mat-card>
+
+    <mat-card *ngIf="data.cabDetails" class="detail-card cab-card">
+      <div class="card-header">
+        <mat-icon>local_taxi</mat-icon>
+        <h3>Cab Details</h3>
+      </div>
+      <div class="card-content">
+        <div class="detail-row">
+          <span class="detail-label">Provider:</span>
+          <span class="detail-value">{{ data.cabDetails.provider }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Pickup Time:</span>
+          <span class="detail-value">{{ formatTime(data.cabDetails.pickupTime) }}</span>
+        </div>
+        <div class="detail-row" *ngIf="data.cabDetails.notes">
+          <span class="detail-label">Notes:</span>
+          <span class="detail-value">{{ data.cabDetails.notes }}</span>
+        </div>
+      </div>
+    </mat-card>
+
+    <mat-card *ngIf="data.itineraryHtml" class="detail-card notes-card">
+      <div class="card-header">
+        <mat-icon>description</mat-icon>
+        <h3>Additional Notes</h3>
+      </div>
+      <div class="card-content">
+        <div [innerHTML]="data.itineraryHtml"></div>
+      </div>
+    </mat-card>
+  </div>
+
+  <div class="itinerary-footer">
+    <button mat-raised-button color="primary" (click)="close()">Close</button>
+  </div>
+</div>

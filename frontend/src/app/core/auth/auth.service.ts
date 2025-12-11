@@ -12,6 +12,7 @@ export interface LoginRequest {
 export interface LoginResponse {
   userUuid: string;
   roleId: string;
+  roleName: string;
 }
 
 @Injectable({
@@ -19,7 +20,7 @@ export interface LoginResponse {
 })
 export class AuthService {
   private readonly USER_UUID_KEY = 'userUuid';
-  private readonly ROLE_KEY = 'roleId';
+  private readonly ROLE_KEY = 'roleName';
 
   constructor(private http: HttpClient, private router: Router) {}
 
@@ -27,7 +28,7 @@ export class AuthService {
     return this.http.post<LoginResponse>(`${environment.apiUrl}/auth/login`, credentials).pipe(
       tap(response => {
         localStorage.setItem(this.USER_UUID_KEY, response.userUuid);
-        localStorage.setItem(this.ROLE_KEY, response.roleId);
+        localStorage.setItem(this.ROLE_KEY, response.roleName);
         this.router.navigate(['/dashboard']);
       })
     );

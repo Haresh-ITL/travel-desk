@@ -1,0 +1,209 @@
+<div class="dashboard-container">
+  <div class="dashboard-header">
+    <div>
+      <h1>{{ getGreeting() }}, {{ userName }}!</h1>
+      <p>Here's what's happening with your travel desk</p>
+    </div>
+  </div>
+
+  <!-- ORG ADMIN Dashboard -->
+  <div *ngIf="userRole === UserRole.ORG_ADMIN" class="dashboard-grid">
+    <mat-card class="stat-card primary-card">
+      <div class="card-icon">
+        <mat-icon>people</mat-icon>
+      </div>
+      <div class="card-content">
+        <h2>{{ stats.totalUsers }}</h2>
+        <p>Total Users</p>
+      </div>
+    </mat-card>
+
+    <mat-card class="stat-card accent-card">
+      <div class="card-icon">
+        <mat-icon>admin_panel_settings</mat-icon>
+      </div>
+      <div class="card-content">
+        <h2>{{ stats.usersByRole?.['Managers'] }}</h2>
+        <p>Managers</p>
+      </div>
+    </mat-card>
+
+    <mat-card class="stat-card success-card">
+      <div class="card-icon">
+        <mat-icon>badge</mat-icon>
+      </div>
+      <div class="card-content">
+        <h2>{{ stats.usersByRole?.['Employees'] }}</h2>
+        <p>Employees</p>
+      </div>
+    </mat-card>
+
+    <mat-card class="stat-card info-card">
+      <div class="card-icon">
+        <mat-icon>support_agent</mat-icon>
+      </div>
+      <div class="card-content">
+        <h2>{{ stats.usersByRole?.['Travel Desk'] }}</h2>
+        <p>Travel Desk Staff</p>
+      </div>
+    </mat-card>
+
+    <mat-card class="wide-card">
+      <h3><mat-icon>bar_chart</mat-icon> Users by Role</h3>
+      <div class="chart-placeholder">
+        <div class="bar-chart">
+          <div class="bar" *ngFor="let role of stats.usersByRole | keyvalue" 
+               [style.height.%]="(role.value / stats.totalUsers!) * 100">
+            <span class="bar-value">{{ role.value }}</span>
+            <span class="bar-label">{{ role.key }}</span>
+          </div>
+        </div>
+      </div>
+    </mat-card>
+  </div>
+
+  <!-- EMPLOYEE Dashboard -->
+  <div *ngIf="userRole === UserRole.EMPLOYEE" class="dashboard-grid">
+    <mat-card class="stat-card primary-card">
+      <div class="card-icon">
+        <mat-icon>flight</mat-icon>
+      </div>
+      <div class="card-content">
+        <h2>{{ stats.totalTrips }}</h2>
+        <p>Total Trips</p>
+      </div>
+    </mat-card>
+
+    <mat-card class="stat-card success-card">
+      <div class="card-icon">
+        <mat-icon>event</mat-icon>
+      </div>
+      <div class="card-content">
+        <h2>{{ stats.upcomingTrips }}</h2>
+        <p>Upcoming Trips</p>
+      </div>
+    </mat-card>
+
+    <mat-card class="stat-card warning-card">
+      <div class="card-icon">
+        <mat-icon>pending_actions</mat-icon>
+      </div>
+      <div class="card-content">
+        <h2>{{ stats.pendingApprovals }}</h2>
+        <p>Pending Approvals</p>
+      </div>
+    </mat-card>
+
+    <mat-card class="wide-card">
+      <h3><mat-icon>timeline</mat-icon> Quick Actions</h3>
+      <div class="action-buttons">
+        <button mat-raised-button color="primary" routerLink="/employee/requests">
+          <mat-icon>add</mat-icon>
+          New Request
+        </button>
+        <button mat-raised-button routerLink="/employee/requests">
+          <mat-icon>list</mat-icon>
+          View All Requests
+        </button>
+        <button mat-raised-button routerLink="/employee/profile">
+          <mat-icon>person</mat-icon>
+          Update Profile
+        </button>
+      </div>
+    </mat-card>
+  </div>
+
+  <!-- MANAGER Dashboard -->
+  <div *ngIf="userRole === UserRole.MANAGER" class="dashboard-grid">
+    <mat-card class="stat-card warning-card">
+      <div class="card-icon">
+        <mat-icon>pending</mat-icon>
+      </div>
+      <div class="card-content">
+        <h2>{{ stats.pendingApprovals }}</h2>
+        <p>Pending Approvals</p>
+      </div>
+    </mat-card>
+
+    <mat-card class="stat-card primary-card">
+      <div class="card-icon">
+        <mat-icon>group</mat-icon>
+      </div>
+      <div class="card-content">
+        <h2>{{ stats.totalUsers }}</h2>
+        <p>Employees Managed</p>
+      </div>
+    </mat-card>
+
+    <mat-card class="stat-card success-card">
+      <div class="card-icon">
+        <mat-icon>check_circle</mat-icon>
+      </div>
+      <div class="card-content">
+        <h2>15</h2>
+        <p>Approved This Week</p>
+      </div>
+    </mat-card>
+
+    <mat-card class="wide-card">
+      <h3><mat-icon>assignment</mat-icon> Quick Actions</h3>
+      <div class="action-buttons">
+        <button mat-raised-button color="warn" routerLink="/manager/approvals">
+          <mat-icon>approval</mat-icon>
+          Review Pending ({{ stats.pendingApprovals }})
+        </button>
+        <button mat-raised-button routerLink="/manager/approvals">
+          <mat-icon>history</mat-icon>
+          View All Requests
+        </button>
+      </div>
+    </mat-card>
+  </div>
+
+  <!-- TRAVEL DESK Dashboard -->
+  <div *ngIf="userRole === UserRole.TRAVEL_DESK_ADMIN" class="dashboard-grid">
+    <mat-card class="stat-card warning-card">
+      <div class="card-icon">
+        <mat-icon>schedule</mat-icon>
+      </div>
+      <div class="card-content">
+        <h2>{{ stats.approvedAwaitingBooking }}</h2>
+        <p>Awaiting Booking</p>
+      </div>
+    </mat-card>
+
+    <mat-card class="stat-card success-card">
+      <div class="card-icon">
+        <mat-icon>done_all</mat-icon>
+      </div>
+      <div class="card-content">
+        <h2>{{ stats.tripsBookedToday }}</h2>
+        <p>Booked Today</p>
+      </div>
+    </mat-card>
+
+    <mat-card class="stat-card info-card">
+      <div class="card-icon">
+        <mat-icon>payments</mat-icon>
+      </div>
+      <div class="card-content">
+        <h2>₹{{ stats.totalCost?.toLocaleString() }}</h2>
+        <p>Total Cost (Month)</p>
+      </div>
+    </mat-card>
+
+    <mat-card class="wide-card">
+      <h3><mat-icon>book_online</mat-icon> Quick Actions</h3>
+      <div class="action-buttons">
+        <button mat-raised-button color="primary" routerLink="/travel-desk/bookings">
+          <mat-icon>add_task</mat-icon>
+          Process Bookings ({{ stats.approvedAwaitingBooking }})
+        </button>
+        <button mat-raised-button routerLink="/travel-desk/bookings">
+          <mat-icon>list_alt</mat-icon>
+          View All Bookings
+        </button>
+      </div>
+    </mat-card>
+  </div>
+</div>

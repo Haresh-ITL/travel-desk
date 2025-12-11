@@ -1,20 +1,23 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { MatSidenavModule } from '@angular/material/sidenav';
+import { RouterModule, Router } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 import { MatToolbarModule } from '@angular/material/toolbar';
+import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatListModule } from '@angular/material/list';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatMenuModule } from '@angular/material/menu';
-import { RouterModule, Router, NavigationEnd } from '@angular/router';
-import { filter } from 'rxjs';
-import { AuthService } from '../auth/auth.service';
+import { MatChipsModule } from '@angular/material/chips';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { UserRole } from '../../shared/models';
+import { AuthService } from '../services/auth.service';
 
 interface MenuItem {
   label: string;
   icon: string;
   route: string;
-  roles: string[];
+  roles: UserRole[];
 }
 
 @Component({
@@ -23,137 +26,92 @@ interface MenuItem {
   imports: [
     CommonModule,
     RouterModule,
-    MatSidenavModule,
+    FormsModule,
     MatToolbarModule,
+    MatSidenavModule,
     MatListModule,
     MatIconModule,
     MatButtonModule,
-    MatMenuModule
+    MatMenuModule,
+    MatChipsModule,
+    MatSlideToggleModule
   ],
-  template: `
-    <mat-sidenav-container class="sidenav-container">
-      <mat-sidenav mode="side" opened class="sidenav">
-        <mat-nav-list>
-          <a mat-list-item [routerLink]="['/dashboard']" routerLinkActive="active">
-            <mat-icon matListIcon>dashboard</mat-icon>
-            <span matLine>Dashboard</span>
-          </a>
-          <ng-container *ngFor="let item of menuItems">
-            <a mat-list-item [routerLink]="item.route" routerLinkActive="active" *ngIf="hasRole(item.roles)">
-              <mat-icon matListIcon>{{ item.icon }}</mat-icon>
-              <span matLine>{{ item.label }}</span>
-            </a>
-          </ng-container>
-        </mat-nav-list>
-      </mat-sidenav>
-      <mat-sidenav-content>
-        <mat-toolbar color="primary" class="toolbar">
-          <span class="app-title">Corporate Travel Desk</span>
-          <span class="spacer"></span>
-          <span class="user-info">{{ getUserName() }} ({{ getRoleDisplay() }})</span>
-          <button mat-icon-button [matMenuTriggerFor]="menu">
-            <mat-icon>account_circle</mat-icon>
-          </button>
-          <mat-menu #menu="matMenu">
-            <button mat-menu-item (click)="toggleTheme()">
-              <mat-icon>{{ isDarkTheme ? 'light_mode' : 'dark_mode' }}</mat-icon>
-              <span>{{ isDarkTheme ? 'Light Theme' : 'Dark Theme' }}</span>
-            </button>
-            <button mat-menu-item (click)="logout()">
-              <mat-icon>logout</mat-icon>
-              <span>Logout</span>
-            </button>
-          </mat-menu>
-        </mat-toolbar>
-        <div class="content">
-          <router-outlet></router-outlet>
-        </div>
-      </mat-sidenav-content>
-    </mat-sidenav-container>
-  `,
-  styles: [`
-    .sidenav-container {
-      height: 100vh;
-    }
-    .sidenav {
-      width: 250px;
-      background-color: #f5f5f5;
-    }
-    .toolbar {
-      position: sticky;
-      top: 0;
-      z-index: 1000;
-    }
-    .app-title {
-      font-weight: 500;
-    }
-    .spacer {
-      flex: 1 1 auto;
-    }
-    .user-info {
-      margin-right: 16px;
-      font-size: 14px;
-    }
-    .content {
-      padding: 20px;
-      background-color: #fafafa;
-      min-height: calc(100vh - 64px);
-    }
-    .active {
-      background-color: rgba(0, 0, 0, 0.1);
-    }
-  `]
+  templateUrl: './layout.component.html',
+  styleUrls: ['./layout.component.scss']
 })
 export class LayoutComponent implements OnInit {
+  userName: string = '';
+  userRole: UserRole | null = null;
   isDarkTheme = false;
-  menuItems: MenuItem[] = [
-    { label: 'Users', icon: 'people', route: '/org-admin/users', roles: ['ORG_ADMIN'] },
-    { label: 'Requests', icon: 'assignment', route: '/employee/requests', roles: ['EMPLOYEE'] },
-    { label: 'Profile', icon: 'person', route: '/employee/profile', roles: ['EMPLOYEE'] },
-    { label: 'Approvals', icon: 'check_circle', route: '/manager/approvals', roles: ['MANAGER'] },
-    { label: 'Bookings', icon: 'flight', route: '/travel-desk/bookings', roles: ['TRAVEL_DESK_ADMIN'] }
+  menuItems: MenuItem[] = [];
+
+  private allMenuItems: MenuItem[] = [
+    { label: 'Dashboard', icon: 'dashboard', route: '/dashboard', roles: [UserRole.ORG_ADMIN, UserRole.EMPLOYEE, UserRole.MANAGER, UserRole.TRAVEL_DESK_ADMIN] },
+    { label: 'Users', icon: 'people', route: '/org-admin/users', roles: [UserRole.ORG_ADMIN] },
+    { label: 'Requests', icon: 'flight_takeoff', route: '/employee/requests', roles: [UserRole.EMPLOYEE] },
+    { label: 'Profile', icon: 'person', route: '/employee/profile', roles: [UserRole.EMPLOYEE] },
+    { label: 'Approvals', icon: 'approval', route: '/manager/approvals', roles: [UserRole.MANAGER] },
+    { label: 'Bookings', icon: 'book_online', route: '/travel-desk/bookings', roles: [UserRole.TRAVEL_DESK_ADMIN] }
   ];
 
-  constructor(private authService: AuthService, private router: Router) {}
+  constructor(
+    private authService: AuthService,
+    private router: Router
+  ) {}
 
   ngOnInit(): void {
-    // Apply theme on init
+    this.userName = this.authService.getUserName() || 'User';
+    this.userRole = this.authService.getRole();
+    this.filterMenuItems();
+    
+    // Load theme preference
+    const savedTheme = localStorage.getItem('theme');
+    this.isDarkTheme = savedTheme === 'dark';
     this.applyTheme();
   }
 
-  hasRole(roles: string[]): boolean {
-    const userRole = this.authService.getRole();
-    return userRole ? roles.includes(userRole) : false;
-  }
-
-  getUserName(): string {
-    // In a real app, you'd fetch user details
-    return 'User'; // Placeholder
-  }
-
-  getRoleDisplay(): string {
-    const role = this.authService.getRole();
-    switch (role) {
-      case 'ORG_ADMIN': return 'Org Admin';
-      case 'EMPLOYEE': return 'Employee';
-      case 'MANAGER': return 'Manager';
-      case 'TRAVEL_DESK_ADMIN': return 'Travel Desk';
-      default: return 'Unknown';
+  filterMenuItems(): void {
+    if (this.userRole) {
+      this.menuItems = this.allMenuItems.filter(item => item.roles.includes(this.userRole!));
     }
   }
 
   toggleTheme(): void {
     this.isDarkTheme = !this.isDarkTheme;
+    localStorage.setItem('theme', this.isDarkTheme ? 'dark' : 'light');
     this.applyTheme();
   }
 
   private applyTheme(): void {
-    const body = document.body;
     if (this.isDarkTheme) {
-      body.classList.add('dark-theme');
+      document.body.classList.add('dark-theme');
     } else {
-      body.classList.remove('dark-theme');
+      document.body.classList.remove('dark-theme');
     }
+  }
+
+  getRoleDisplay(): string {
+    if (!this.userRole) return '';
+    return this.userRole.replace('_', ' ');
+  }
+
+  getRoleColor(): string {
+    switch (this.userRole) {
+      case UserRole.ORG_ADMIN:
+        return 'primary';
+      case UserRole.EMPLOYEE:
+        return 'accent';
+      case UserRole.MANAGER:
+        return 'warn';
+      case UserRole.TRAVEL_DESK_ADMIN:
+        return 'primary';
+      default:
+        return '';
+    }
+  }
+
+  getUserEmail(): string | null {
+    return this.authService.getUserEmail();
   }
 
   logout(): void {
