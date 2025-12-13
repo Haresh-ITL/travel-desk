@@ -207,5 +207,6 @@ export {
   AllBookingsResponse,
   CabDetails,
   HotelBookingDetails,
+  ConfirmationFile,
   UpdateBookingRequest
 } from './booking';

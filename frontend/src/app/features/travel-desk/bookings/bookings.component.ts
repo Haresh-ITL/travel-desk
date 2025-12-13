@@ -22,7 +22,7 @@ import { MatDividerModule } from '@angular/material/divider';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { TravelDeskService } from '../../../core/services/travel-desk.service';
 import { PaymentService } from '../../../core/services/payment.service';
-import { TravelRequest, BookingDetails, BookingWithDetails, BookingStatus, BookingFilters, CabDetails, HotelBookingDetails, UpdateBookingRequest } from '../../../shared/models';
+import { TravelRequest, BookingDetails, BookingWithDetails, BookingStatus, BookingFilters, CabDetails, HotelBookingDetails, ConfirmationFile, UpdateBookingRequest } from '../../../shared/models';
 
 @Component({
   selector: 'app-bookings',
@@ -57,7 +57,7 @@ export class BookingsComponent implements OnInit {
 
   // Process Bookings tab
   processBookings: BookingWithDetails[] = [];
-  processBookingsColumns: string[] = ['status', 'employee', 'from', 'to', 'travelDate', 'createdAt', 'actions'];
+  processBookingsColumns: string[] = ['employee', 'from', 'to', 'travelDate', 'createdAt', 'status', 'actions'];
   processBookingsLoading = false;
   processBookingsError: string | null = null;
   processBookingsPagination = {
@@ -70,7 +70,7 @@ export class BookingsComponent implements OnInit {
 
   // View All Bookings tab
   allBookings: BookingWithDetails[] = [];
-  allBookingsColumns: string[] = ['status', 'employee', 'from', 'to', 'travelDate', 'createdAt', 'actions'];
+  allBookingsColumns: string[] = ['employee', 'from', 'to', 'travelDate', 'createdAt', 'status', 'actions'];
   allBookingsLoading = false;
   allBookingsError: string | null = null;
   allBookingsPagination = {
@@ -92,11 +92,11 @@ export class BookingsComponent implements OnInit {
     flight?: string;
     hotel?: { name: string; phoneNumber: string; roomNumber: string; location: string };
     cab?: { name: string; driverName: string; phoneNumber: string };
-    itineraryHtml?: string;
     from?: string;
     to?: string;
     status?: BookingStatus;
   } = {};
+  selectedFiles: { file: File; base64: string; fileName: string }[] = [];
 
   // View Booking Details
   viewingBooking: BookingWithDetails | null = null;
@@ -204,6 +204,77 @@ export class BookingsComponent implements OnInit {
     return null;
   }
 
+  getFileName(file: string | { fileName: string; base64: string; mimeType?: string }): string {
+    if (typeof file === 'string') {
+      // Legacy format - extract filename from path or return as is
+      const parts = file.split('/');
+      return parts[parts.length - 1] || file;
+    }
+    return file.fileName;
+  }
+
+  isFileObject(file: string | { fileName: string; base64: string; mimeType?: string }): file is { fileName: string; base64: string; mimeType?: string } {
+    return typeof file === 'object' && file !== null && 'fileName' in file && 'base64' in file;
+  }
+
+  downloadFile(file: string | { fileName: string; base64: string; mimeType?: string }): void {
+    if (this.isFileObject(file)) {
+      try {
+        // Convert base64 to blob
+        const byteCharacters = atob(file.base64);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: file.mimeType || 'application/octet-stream' });
+        
+        // Create download link
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = file.fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      } catch (error) {
+        this.snackBar.open('Error downloading file', 'Close', { duration: 5000 });
+        console.error('Error downloading file:', error);
+      }
+    } else {
+      // Legacy format - just show message
+      this.snackBar.open('File download not available for legacy format', 'Close', { duration: 3000 });
+    }
+  }
+
+  viewFile(file: string | { fileName: string; base64: string; mimeType?: string }): void {
+    if (this.isFileObject(file)) {
+      try {
+        // Convert base64 to blob
+        const byteCharacters = atob(file.base64);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: file.mimeType || 'application/octet-stream' });
+        
+        // Create object URL and open in new window
+        const url = window.URL.createObjectURL(blob);
+        window.open(url, '_blank');
+        // Clean up after a delay
+        setTimeout(() => window.URL.revokeObjectURL(url), 100);
+      } catch (error) {
+        this.snackBar.open('Error viewing file', 'Close', { duration: 5000 });
+        console.error('Error viewing file:', error);
+      }
+    } else {
+      // Legacy format - just show message
+      this.snackBar.open('File view not available for legacy format', 'Close', { duration: 3000 });
+    }
+  }
+
   editBooking(booking: BookingWithDetails): void {
     // Always get the latest booking data from the current array state
     let latestBooking: BookingWithDetails | undefined;
@@ -276,16 +347,60 @@ export class BookingsComponent implements OnInit {
       flight: bookingCopy.flight || '',
       hotel: hotelValue,
       cab: cabValue,
-      itineraryHtml: bookingCopy.itineraryHtml || '',
       from: bookingCopy.from || '',
       to: bookingCopy.to || '',
       status: bookingCopy.status
     };
+    // Reset selected files when editing
+    this.selectedFiles = [];
   }
 
   cancelEdit(): void {
     this.editingBooking = null;
     this.editBookingForm = {};
+    this.selectedFiles = [];
+  }
+
+  onFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files.length > 0) {
+      Array.from(input.files).forEach(file => {
+        // Check file size (limit to 10MB per file)
+        const maxSize = 10 * 1024 * 1024; // 10MB
+        if (file.size > maxSize) {
+          this.snackBar.open(`File "${file.name}" is too large. Maximum size is 10MB.`, 'Close', { duration: 5000 });
+          return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = () => {
+          try {
+            const base64 = reader.result as string;
+            // Remove data URL prefix (e.g., "data:image/png;base64,")
+            const base64Data = base64.split(',')[1] || base64;
+            this.selectedFiles.push({
+              file: file,
+              base64: base64Data,
+              fileName: file.name
+            });
+          } catch (error) {
+            this.snackBar.open(`Error reading file "${file.name}"`, 'Close', { duration: 5000 });
+            console.error('Error reading file:', error);
+          }
+        };
+        reader.onerror = () => {
+          this.snackBar.open(`Error reading file "${file.name}"`, 'Close', { duration: 5000 });
+          console.error('FileReader error:', reader.error);
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+    // Reset input so same file can be selected again
+    input.value = '';
+  }
+
+  removeFile(index: number): void {
+    this.selectedFiles.splice(index, 1);
   }
 
   saveBookingChanges(): void {
@@ -293,7 +408,6 @@ export class BookingsComponent implements OnInit {
 
     // Prepare the update payload - cab and hotel are always objects in editBookingForm
     const updatePayload: UpdateBookingRequest = {
-      ...this.editBookingForm,
       // Send cab as object if it has a name, otherwise undefined
       cab: this.editBookingForm.cab && this.editBookingForm.cab.name 
         ? this.editBookingForm.cab 
@@ -301,8 +415,25 @@ export class BookingsComponent implements OnInit {
       // Send hotel as object if it has a name, otherwise undefined
       hotel: this.editBookingForm.hotel && this.editBookingForm.hotel.name 
         ? this.editBookingForm.hotel 
-        : undefined
+        : undefined,
+      flight: this.editBookingForm.flight || undefined,
+      from: this.editBookingForm.from || undefined,
+      to: this.editBookingForm.to || undefined,
+      status: this.editBookingForm.status
     };
+
+    // Add confirmation files as base64 if any files are selected
+    if (this.selectedFiles.length > 0) {
+      // Filter out any files that don't have base64 data yet (shouldn't happen, but safety check)
+      const validFiles = this.selectedFiles.filter(f => f.base64 && f.base64.length > 0);
+      if (validFiles.length > 0) {
+        updatePayload.confirmationFiles = validFiles.map(f => ({
+          fileName: f.fileName,
+          base64: f.base64,
+          mimeType: f.file.type || 'application/octet-stream'
+        }));
+      }
+    }
 
     this.travelDeskService.updateBooking(this.editingBooking.uuid, updatePayload).subscribe({
       next: (updatedBooking) => {
@@ -334,6 +465,8 @@ export class BookingsComponent implements OnInit {
           }
         }
         
+        // Clear selected files after successful save
+        this.selectedFiles = [];
         this.cancelEdit();
       },
       error: (error) => {

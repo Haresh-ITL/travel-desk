@@ -1,11 +1,59 @@
 .bookings-container {
-  max-width: 1600px;
+  max-width: 1800px;
   margin: 0 auto;
+  padding: 24px;
 
   h1 {
-    margin: 0 0 24px;
-    font-size: 28px;
-    font-weight: 600;
+    margin: 0 0 32px;
+    font-size: 32px;
+    font-weight: 700;
+    color: #2d3748;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    &::before {
+      content: '';
+      width: 4px;
+      height: 32px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 2px;
+    }
+  }
+
+  // Tab group styling
+  ::ng-deep {
+    .mat-mdc-tab-group {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      overflow: hidden;
+
+      .mat-mdc-tab-header {
+        background: white;
+        border-bottom: 2px solid #e8ecf1;
+        padding: 0 24px;
+
+        .mat-mdc-tab-label {
+          font-weight: 500;
+          font-size: 15px;
+          min-width: 160px;
+          padding: 0 24px;
+        }
+
+        .mat-mdc-tab-label-active {
+          .mat-mdc-tab-label-content {
+            color: #667eea;
+            font-weight: 600;
+          }
+        }
+      }
+
+      .mat-mdc-tab-body-wrapper {
+        background: transparent;
+        padding: 0;
+      }
+    }
   }
 }
 
@@ -113,69 +161,150 @@
   padding: 24px;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 20px;
+  background: #f5f7fa;
+  min-height: calc(100vh - 200px);
 }
 
 .filters-section {
-  mat-card {
-    h3 {
+  .filters-card {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    border-radius: 12px;
+    overflow: hidden;
+
+    .filters-header {
       display: flex;
+      justify-content: space-between;
       align-items: center;
-      gap: 8px;
-      margin: 0 0 16px;
-      font-size: 18px;
-      font-weight: 600;
+      padding: 20px 24px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      margin: -16px -16px 20px -16px;
+
+      .filters-title {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+
+        mat-icon {
+          font-size: 24px;
+          width: 24px;
+          height: 24px;
+        }
+
+        h3 {
+          margin: 0;
+          font-size: 20px;
+          font-weight: 600;
+          color: white;
+        }
+      }
+
+      .clear-filters-btn {
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        border-color: rgba(255, 255, 255, 0.3);
+
+        &:hover {
+          background: rgba(255, 255, 255, 0.3);
+        }
+
+        mat-icon {
+          color: white;
+        }
+      }
     }
 
     .filter-controls {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 16px;
-      align-items: center;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 20px;
+      padding: 8px 0;
 
-      mat-form-field {
+      .filter-field {
         width: 100%;
-      }
 
-      .filter-actions {
-        display: flex;
-        gap: 8px;
-        align-items: center;
+        ::ng-deep {
+          .mat-mdc-form-field-subscript-wrapper {
+            margin-top: 4px;
+          }
+        }
       }
     }
   }
 }
 
 .table-section {
-  mat-card {
+  .table-card {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    border-radius: 12px;
+    overflow: hidden;
+
     .table-header {
       display: flex;
       justify-content: space-between;
-      align-items: center;
-      margin-bottom: 16px;
-      padding-bottom: 16px;
-      border-bottom: 1px solid #e0e0e0;
+      align-items: flex-start;
+      padding: 24px;
+      background: white;
+      border-bottom: 2px solid #e8ecf1;
 
-      h3 {
+      .table-title {
         display: flex;
-        align-items: center;
-        gap: 8px;
-        margin: 0;
-        font-size: 18px;
-        font-weight: 600;
+        align-items: flex-start;
+        gap: 16px;
+        flex: 1;
+
+        mat-icon {
+          font-size: 28px;
+          width: 28px;
+          height: 28px;
+          color: #667eea;
+          margin-top: 2px;
+        }
+
+        h3 {
+          margin: 0 0 4px 0;
+          font-size: 22px;
+          font-weight: 600;
+          color: #2d3748;
+        }
+
+        .table-subtitle {
+          margin: 0;
+          font-size: 14px;
+          color: #718096;
+          font-weight: 400;
+        }
+      }
+
+      button {
+        mat-icon {
+          margin-right: 4px;
+        }
       }
     }
 
     .error-message {
       display: flex;
       align-items: center;
-      gap: 8px;
-      padding: 16px;
-      margin-bottom: 16px;
-      background-color: #ffebee;
+      gap: 12px;
+      padding: 16px 20px;
+      margin: 0 24px 24px 24px;
+      background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
       color: #c62828;
-      border-radius: 4px;
+      border-radius: 8px;
       border-left: 4px solid #c62828;
+      box-shadow: 0 2px 4px rgba(198, 40, 40, 0.1);
+
+      mat-icon {
+        font-size: 24px;
+        width: 24px;
+        height: 24px;
+      }
+
+      span {
+        font-weight: 500;
+      }
     }
 
     .loading-container {
@@ -183,28 +312,121 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 48px;
-      gap: 16px;
+      padding: 80px 48px;
+      gap: 20px;
+
+      mat-spinner {
+        ::ng-deep circle {
+          stroke: #667eea;
+        }
+      }
 
       p {
         margin: 0;
         color: #718096;
+        font-size: 16px;
+        font-weight: 500;
       }
     }
 
     .table-container {
       overflow-x: auto;
+      padding: 0 24px 24px 24px;
 
       .bookings-table {
         width: 100%;
+        background: white;
+        border-radius: 8px;
+        overflow: hidden;
+
+        ::ng-deep {
+          .mat-mdc-header-row {
+            background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+            border-bottom: 2px solid #e2e8f0;
+
+            .mat-mdc-header-cell {
+              font-weight: 600;
+              color: #2d3748;
+              font-size: 13px;
+              text-transform: uppercase;
+              letter-spacing: 0.8px;
+              padding: 16px;
+            }
+          }
+
+          .mat-mdc-row {
+            transition: all 0.2s ease;
+            border-bottom: 1px solid #e8ecf1;
+
+            &:hover {
+              background-color: #f7fafc;
+              box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            }
+
+            &:last-child {
+              border-bottom: none;
+            }
+
+            .mat-mdc-cell {
+              color: #4a5568;
+              font-size: 14px;
+              padding: 16px;
+              border-bottom: none;
+
+              mat-chip {
+                font-weight: 500;
+                font-size: 12px;
+                padding: 4px 12px;
+                min-height: 28px;
+              }
+            }
+          }
+        }
 
         .mat-column-status {
-          width: 120px;
+          width: 130px;
+        }
+
+        .mat-column-employee {
+          min-width: 150px;
+        }
+
+        .mat-column-from,
+        .mat-column-to {
+          min-width: 120px;
+        }
+
+        .mat-column-travelDate {
+          min-width: 180px;
+        }
+
+        .mat-column-createdAt {
+          min-width: 160px;
         }
 
         .mat-column-actions {
-          width: 80px;
+          width: 100px;
           text-align: center;
+        }
+      }
+
+      // Paginator styling
+      ::ng-deep {
+        .mat-mdc-paginator {
+          background: #f7fafc;
+          border-top: 1px solid #e2e8f0;
+          border-radius: 0 0 12px 12px;
+          padding: 16px 24px;
+        }
+
+        .mat-mdc-paginator-container {
+          justify-content: space-between;
+        }
+
+        .mat-mdc-paginator-page-size-label,
+        .mat-mdc-paginator-range-label {
+          color: #718096;
+          font-size: 14px;
         }
       }
     }
@@ -214,20 +436,40 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 48px;
+      padding: 60px 48px;
       gap: 16px;
-      color: #718096;
-      font-style: italic;
+      color: #a0aec0;
+      text-align: center;
 
       mat-icon {
-        font-size: 48px;
-        width: 48px;
-        height: 48px;
-        opacity: 0.5;
+        font-size: 64px;
+        width: 64px;
+        height: 64px;
+        opacity: 0.4;
+        color: #cbd5e0;
       }
 
       p {
         margin: 0;
+        font-size: 16px;
+        font-weight: 500;
+        color: #718096;
+      }
+    }
+
+    .action-buttons {
+      display: flex;
+      gap: 4px;
+      justify-content: center;
+      align-items: center;
+
+      button {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+        &:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
       }
     }
   }
@@ -302,13 +544,7 @@
   }
 }
 
-// Action Buttons
-.action-buttons {
-  display: flex;
-  gap: 4px;
-  align-items: center;
-  justify-content: center;
-}
+// Action Buttons (defined in table-section above)
 
 // View Booking Details Drawer Styles
 .details-drawer-overlay {
@@ -555,6 +791,69 @@
 
               mat-icon {
                 color: #667eea;
+              }
+
+              .file-name {
+                flex: 1;
+                font-size: 14px;
+                color: #2d3748;
+                word-break: break-word;
+              }
+
+              .file-actions {
+                display: flex;
+                gap: 4px;
+                margin-left: auto;
+              }
+            }
+          }
+        }
+
+        .file-upload-section {
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+
+          .file-hint {
+            font-size: 12px;
+            color: #718096;
+            margin: 0;
+          }
+
+          .selected-files-list {
+            margin-top: 16px;
+
+            h4 {
+              margin: 0 0 12px;
+              font-size: 14px;
+              font-weight: 600;
+              color: #2d3748;
+            }
+
+            .file-item-edit {
+              display: flex;
+              align-items: center;
+              gap: 12px;
+              padding: 12px;
+              background: #f7fafc;
+              border-radius: 6px;
+              border: 1px solid #e2e8f0;
+              margin-bottom: 8px;
+
+              mat-icon {
+                color: #667eea;
+              }
+
+              span {
+                flex: 1;
+                font-size: 14px;
+                color: #2d3748;
+              }
+
+              button {
+                mat-icon {
+                  color: #e53e3e;
+                }
               }
 
               span {

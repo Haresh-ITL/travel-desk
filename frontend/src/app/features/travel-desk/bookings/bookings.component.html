@@ -6,10 +6,15 @@
     <mat-tab label="Process Bookings">
       <div class="tab-content-wrapper">
         <div class="filters-section">
-          <mat-card>
-            <h3><mat-icon>filter_list</mat-icon> Filters</h3>
+          <mat-card class="filters-card">
+            <div class="filters-header">
+              <div class="filters-title">
+                <mat-icon>filter_list</mat-icon>
+                <h3>Filters</h3>
+              </div>
+            </div>
             <div class="filter-controls">
-              <mat-form-field appearance="outline">
+              <mat-form-field appearance="outline" class="filter-field">
                 <mat-label>Status</mat-label>
                 <mat-select [(ngModel)]="processBookingsStatusFilter" (selectionChange)="updateProcessBookingsStatusFilter()" multiple>
                   <mat-option value="PENDING">Pending</mat-option>
@@ -21,9 +26,17 @@
         </div>
 
         <div class="table-section">
-          <mat-card>
+          <mat-card class="table-card">
             <div class="table-header">
-              <h3><mat-icon>assignment</mat-icon> Bookings Requiring Action</h3>
+              <div class="table-title">
+                <mat-icon>assignment</mat-icon>
+                <div>
+                  <h3>Bookings Requiring Action</h3>
+                  <p class="table-subtitle" *ngIf="!processBookingsLoading && processBookings.length > 0">
+                    {{ processBookingsPagination.total }} booking{{ processBookingsPagination.total !== 1 ? 's' : '' }} found
+                  </p>
+                </div>
+              </div>
               <button mat-raised-button color="primary" (click)="loadProcessBookings()" [disabled]="processBookingsLoading">
                 <mat-icon>refresh</mat-icon>
                 Refresh
@@ -136,13 +149,22 @@
     <mat-tab label="View All Bookings">
       <div class="tab-content-wrapper">
         <div class="filters-section">
-          <mat-card>
-            <h3><mat-icon>filter_list</mat-icon> Filters</h3>
+          <mat-card class="filters-card">
+            <div class="filters-header">
+              <div class="filters-title">
+                <mat-icon>filter_list</mat-icon>
+                <h3>Filters</h3>
+              </div>
+              <button mat-stroked-button color="warn" (click)="clearAllBookingsFilters()" class="clear-filters-btn">
+                <mat-icon>clear</mat-icon>
+                Clear All
+              </button>
+            </div>
             <div class="filter-controls">
-              <mat-form-field appearance="outline">
+              <mat-form-field appearance="outline" class="filter-field">
                 <mat-label>Status</mat-label>
                 <mat-select [(ngModel)]="allBookingsFilters.status" (selectionChange)="applyAllBookingsFilters()">
-                  <mat-option [value]="undefined">All</mat-option>
+                  <mat-option [value]="undefined">All Status</mat-option>
                   <mat-option value="PENDING">Pending</mat-option>
                   <mat-option value="IN_PROGRESS">In Progress</mat-option>
                   <mat-option value="CONFIRMED">Confirmed</mat-option>
@@ -150,48 +172,44 @@
                 </mat-select>
               </mat-form-field>
 
-              <mat-form-field appearance="outline">
-                <mat-label>Employee ID</mat-label>
-                <input matInput [(ngModel)]="allBookingsFilters.employeeId" (blur)="applyAllBookingsFilters()" placeholder="Filter by employee">
-              </mat-form-field>
-
-              <mat-form-field appearance="outline">
+              <mat-form-field appearance="outline" class="filter-field">
                 <mat-label>Travel Type</mat-label>
                 <mat-select [(ngModel)]="allBookingsFilters.travelType" (selectionChange)="applyAllBookingsFilters()">
-                  <mat-option [value]="undefined">All</mat-option>
+                  <mat-option [value]="undefined">All Types</mat-option>
                   <mat-option value="DOMESTIC">Domestic</mat-option>
                   <mat-option value="INTERNATIONAL">International</mat-option>
                 </mat-select>
               </mat-form-field>
 
-              <mat-form-field appearance="outline">
+              <mat-form-field appearance="outline" class="filter-field">
                 <mat-label>Start Date</mat-label>
                 <input matInput [matDatepicker]="startPicker" [(ngModel)]="allBookingsFilters.startDate" (dateChange)="applyAllBookingsFilters()">
                 <mat-datepicker-toggle matSuffix [for]="startPicker"></mat-datepicker-toggle>
                 <mat-datepicker #startPicker></mat-datepicker>
               </mat-form-field>
 
-              <mat-form-field appearance="outline">
+              <mat-form-field appearance="outline" class="filter-field">
                 <mat-label>End Date</mat-label>
                 <input matInput [matDatepicker]="endPicker" [(ngModel)]="allBookingsFilters.endDate" (dateChange)="applyAllBookingsFilters()">
                 <mat-datepicker-toggle matSuffix [for]="endPicker"></mat-datepicker-toggle>
                 <mat-datepicker #endPicker></mat-datepicker>
               </mat-form-field>
-
-              <div class="filter-actions">
-                <button mat-raised-button color="warn" (click)="clearAllBookingsFilters()">
-                  <mat-icon>clear</mat-icon>
-                  Clear Filters
-                </button>
-              </div>
             </div>
           </mat-card>
         </div>
 
         <div class="table-section">
-          <mat-card>
+          <mat-card class="table-card">
             <div class="table-header">
-              <h3><mat-icon>list_alt</mat-icon> All Bookings</h3>
+              <div class="table-title">
+                <mat-icon>list_alt</mat-icon>
+                <div>
+                  <h3>All Bookings</h3>
+                  <p class="table-subtitle" *ngIf="!allBookingsLoading && allBookings.length > 0">
+                    {{ allBookingsPagination.total }} booking{{ allBookingsPagination.total !== 1 ? 's' : '' }} found
+                  </p>
+                </div>
+              </div>
               <button mat-raised-button color="primary" (click)="loadAllBookings()" [disabled]="allBookingsLoading">
                 <mat-icon>refresh</mat-icon>
                 Refresh
@@ -389,12 +407,27 @@
             </div>
           </mat-tab>
 
-        <mat-tab label="Itinerary">
+        <mat-tab label="Confirmation Files">
           <div class="tab-content">
-            <mat-form-field appearance="outline" class="full-width">
-              <mat-label>Itinerary HTML</mat-label>
-                <textarea matInput [(ngModel)]="editBookingForm.itineraryHtml" rows="10"></textarea>
-            </mat-form-field>
+            <div class="file-upload-section">
+              <input type="file" #fileInput multiple (change)="onFileSelected($event)" style="display: none;" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx">
+              <button mat-raised-button color="primary" (click)="fileInput.click()">
+                <mat-icon>attach_file</mat-icon>
+                Select Files
+              </button>
+              <p class="file-hint">You can select multiple files (PDF, Images, Documents)</p>
+              
+              <div *ngIf="selectedFiles.length > 0" class="selected-files-list">
+                <h4>Selected Files:</h4>
+                <div *ngFor="let file of selectedFiles; let i = index" class="file-item-edit">
+                  <mat-icon>description</mat-icon>
+                  <span>{{ file.fileName }}</span>
+                  <button mat-icon-button color="warn" (click)="removeFile(i)" matTooltip="Remove file">
+                    <mat-icon>close</mat-icon>
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         </mat-tab>
       </mat-tab-group>
@@ -495,7 +528,7 @@
               <div *ngIf="isHotelString(viewingBooking.hotel)" class="detail-text">
                 <p>{{ viewingBooking.hotel }}</p>
               </div>
-              <div *ngIf="isHotelObject(viewingBooking.hotel)" class="hotel-details">
+              <div *ngIf="isHotelObject(viewingBooking.hotel)" class="cab-details">
                 <div class="detail-row">
                   <span class="detail-label">Hotel Name:</span>
                   <span class="detail-value">{{ viewingBooking.hotel.name }}</span>
@@ -571,7 +604,15 @@
               <div class="files-list">
                 <div *ngFor="let file of viewingBooking.confirmationFiles" class="file-item">
                   <mat-icon>description</mat-icon>
-                  <span>{{ file }}</span>
+                  <span class="file-name">{{ getFileName(file) }}</span>
+                  <div class="file-actions" *ngIf="isFileObject(file)">
+                    <button mat-icon-button color="primary" (click)="viewFile(file)" matTooltip="View file">
+                      <mat-icon>visibility</mat-icon>
+                    </button>
+                    <button mat-icon-button color="accent" (click)="downloadFile(file)" matTooltip="Download file">
+                      <mat-icon>download</mat-icon>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>

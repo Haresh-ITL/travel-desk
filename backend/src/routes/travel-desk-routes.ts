@@ -2,7 +2,7 @@ import { Router } from "express";
 import multer from "multer";
 import { uuid } from "uuidv4";
 import { requireUser, requireRole } from "../middleware/auth";
-import { Booking } from "../models/bookings";
+import { Booking, BookingStatus } from "../models/bookings";
 import { TravelRequest } from "../models/travel-request";
 import { User } from "../models/user";
 import { Role } from "../models/role";
@@ -92,62 +92,60 @@ travelDeskRouter.post(
         cabConfirmationUrl
       } = req.body;
       
-      const request = await TravelRequest.findOne({ uuid: requestUuid });
-      if (!request) return res.status(404).json({ message: "Request not found" });
+      const travelRequest = await TravelRequest.findOne({ uuid: requestUuid });
+      if (!travelRequest) return res.status(404).json({ message: "Request not found" });
 
-      const flight = (flightAirline || flightNumber) ? {
-        airline: flightAirline,
-        flightNumber: flightNumber,
-        departureAirport: flightDepartureAirport,
-        departureTime: flightDepartureTime ? new Date(flightDepartureTime) : undefined,
-        arrivalAirport: flightArrivalAirport,
-        arrivalTime: flightArrivalTime ? new Date(flightArrivalTime) : undefined
-      } : undefined;
-
-      const hotel = (hotelName || hotelLocation) ? {
-        name: hotelName,
-        location: hotelLocation,
-        checkin: hotelCheckin ? new Date(hotelCheckin) : undefined,
-        checkout: hotelCheckout ? new Date(hotelCheckout) : undefined,
-        amount: hotelAmount ? parseFloat(hotelAmount) : undefined
-      } : undefined;
-
-      const cab = (cabProvider || cabPickupTime) ? {
-        provider: cabProvider,
-        pickupTime: cabPickupTime ? new Date(cabPickupTime) : undefined,
-        notes: cabNotes
-      } : undefined;
+      // For POST route, we'll accept flight/hotel/cab as strings (simple text) or objects
+      // The frontend can send them as strings for simplicity
+      const flightValue = flightAirline || flightNumber 
+        ? `${flightAirline || ''} ${flightNumber || ''}`.trim() 
+        : undefined;
+      
+      const hotelValue = hotelName || hotelLocation
+        ? `${hotelName || ''} ${hotelLocation || ''}`.trim()
+        : undefined;
+      
+      const cabValue = cabProvider
+        ? cabProvider
+        : undefined;
 
       const booking = await Booking.create({
         uuid: uuid(),
         requestUuid,
-        employeeId: request.employeeId,
-        flight,
-        hotel,
-        cab,
+        flight: flightValue,
+        hotel: hotelValue,
+        cab: cabValue,
         confirmationFiles: [],
-        flightConfirmationUrl,
-        hotelConfirmationUrl,
-        cabConfirmationUrl,
-        itineraryHtml: itineraryHtml || ""
+        itineraryHtml: itineraryHtml || "",
+        status: "PENDING" as BookingStatus,
+        from: travelRequest.from,
+        to: travelRequest.to
       });
 
-      request.status = "BOOKED";
-      await request.save();
+      travelRequest.status = "BOOKED";
+      await travelRequest.save();
+
+      // Populate travel request for response
+      const employee = await User.findOne({ uuid: travelRequest.employeeId }).lean();
+      const travelRequestData = {
+        ...travelRequest.toObject(),
+        employeeName: employee?.name || travelRequest.employeeId
+      };
 
       res.json({
         uuid: booking.uuid,
         requestUuid: booking.requestUuid,
-        employeeUuid: booking.employeeId,
         flight: booking.flight,
         hotel: booking.hotel,
         cab: booking.cab,
         itineraryHtml: booking.itineraryHtml,
-        flightConfirmationUrl: booking.flightConfirmationUrl,
-        hotelConfirmationUrl: booking.hotelConfirmationUrl,
-        cabConfirmationUrl: booking.cabConfirmationUrl,
+        confirmationFiles: booking.confirmationFiles,
+        status: booking.status,
+        from: booking.from,
+        to: booking.to,
         createdAt: booking.createdAt,
-        updatedAt: booking.updatedAt
+        updatedAt: booking.updatedAt,
+        travelRequest: travelRequestData
       });
     } catch (error) {
       res.status(500).json({ message: "Failed to create booking" });
@@ -175,6 +173,85 @@ travelDeskRouter.post(
   }
 );
 
+// Get bookings that require action (PENDING or IN_PROGRESS)
+travelDeskRouter.get(
+  "/bookings/process",
+  requireUser,
+  requireRole(["ROLE_TRAVEL_DESK_ADMIN", "TRAVEL_DESK_ADMIN"]),
+  async (req, res) => {
+    try {
+      const {
+        status,
+        limit = "20",
+        page = "1",
+        sortBy = "createdAt",
+        sortOrder = "desc"
+      } = req.query;
+
+      const pageNum = parseInt(page as string, 10);
+      const limitNum = parseInt(limit as string, 10);
+      const skip = (pageNum - 1) * limitNum;
+
+      const sort: Record<string, 1 | -1> = {};
+      sort[sortBy as string] = sortOrder === "asc" ? 1 : -1;
+
+      // Build booking filter - default to PENDING and IN_PROGRESS if no status specified
+      const bookingFilter: Record<string, any> = {};
+      
+      // Handle status filter - can be single value or array
+      if (status) {
+        const statusArray = Array.isArray(status) ? status : [status];
+        bookingFilter.status = { $in: statusArray };
+      } else {
+        // Default to PENDING and IN_PROGRESS if no status filter
+        bookingFilter.status = { $in: ["PENDING", "IN_PROGRESS"] };
+      }
+
+      // Find bookings with filters
+      const bookings = await Booking.find(bookingFilter)
+        .sort(sort)
+        .skip(skip)
+        .limit(limitNum)
+        .lean();
+
+      // Populate travel request information for each booking
+      const bookingsWithDetails = await Promise.all(
+        bookings.map(async (booking) => {
+          const request = await TravelRequest.findOne({ uuid: booking.requestUuid }).lean();
+          let travelRequest = null;
+          
+          if (request) {
+            const employee = await User.findOne({ uuid: request.employeeId }).lean();
+            travelRequest = {
+              ...request,
+              employeeName: employee?.name || request.employeeId
+            };
+          }
+          
+          return {
+            ...booking,
+            travelRequest: travelRequest
+          };
+        })
+      );
+
+      const total = await Booking.countDocuments(bookingFilter);
+
+      res.json({
+        bookings: bookingsWithDetails,
+        pagination: {
+          page: pageNum,
+          limit: limitNum,
+          total,
+          totalPages: Math.ceil(total / limitNum)
+        }
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Error fetching process bookings", error: error instanceof Error ? error.message : "Unknown error" });
+    }
+  }
+);
+
 // Get all bookings
 travelDeskRouter.get(
   "/bookings",
@@ -187,6 +264,7 @@ travelDeskRouter.get(
         startDate,
         endDate,
         travelType,
+        status,
         limit = "20",
         page = "1",
         sortBy = "createdAt",
@@ -241,6 +319,12 @@ travelDeskRouter.get(
       const bookingFilter: Record<string, any> = {};
       if (requestUuids) {
         bookingFilter.requestUuid = { $in: requestUuids };
+      }
+      
+      // Handle status filter if provided
+      if (status) {
+        const statusArray = Array.isArray(status) ? status : [status];
+        bookingFilter.status = { $in: statusArray };
       }
 
       // Find bookings with filters
@@ -300,11 +384,10 @@ travelDeskRouter.put(
   "/bookings/:uuid",
   requireUser,
   requireRole(["ROLE_TRAVEL_DESK_ADMIN", "TRAVEL_DESK_ADMIN"]),
-  upload.array("confirmations", 10), // Optional file uploads
   async (req, res) => {
     try {
       const { uuid } = req.params;
-      const { flight, hotel, cab, itineraryHtml, flightConfirmationUrl, hotelConfirmationUrl, cabConfirmationUrl } = req.body;
+      const { flight, hotel, cab, from, to, status, confirmationFiles } = req.body;
 
       const booking = await Booking.findOne({ uuid });
       if (!booking) {
@@ -315,45 +398,72 @@ travelDeskRouter.put(
       if (flight !== undefined) booking.flight = flight;
       if (hotel !== undefined) booking.hotel = hotel;
       if (cab !== undefined) booking.cab = cab;
-      if (itineraryHtml !== undefined) booking.itineraryHtml = itineraryHtml;
-      if (flightConfirmationUrl !== undefined) booking.flightConfirmationUrl = flightConfirmationUrl;
-      if (hotelConfirmationUrl !== undefined) booking.hotelConfirmationUrl = hotelConfirmationUrl;
-      if (cabConfirmationUrl !== undefined) booking.cabConfirmationUrl = cabConfirmationUrl;
-
-      // Handle file uploads if provided
-      if (req.files && (req.files as Express.Multer.File[]).length > 0) {
-        const newFiles = (req.files as Express.Multer.File[]).map((f) => f.path);
+      if (from !== undefined) booking.from = from;
+      if (to !== undefined) booking.to = to;
+      if (status !== undefined) {
+        const validStatuses: BookingStatus[] = ["PENDING", "IN_PROGRESS", "CONFIRMED", "CANCELLED"];
+        if (validStatuses.includes(status as BookingStatus)) {
+          const oldStatus = booking.status;
+          booking.status = status as BookingStatus;
+          // Set confirmedAt when status changes to CONFIRMED
+          if (oldStatus !== "CONFIRMED" && status === "CONFIRMED") {
+            booking.confirmedAt = new Date();
+          }
+        }
+      }
+      // Handle base64 file uploads if provided
+      if (confirmationFiles && Array.isArray(confirmationFiles) && confirmationFiles.length > 0) {
+        // Store files as objects with fileName and base64 (base64 is already encoded, store as-is)
+        const newFiles = confirmationFiles.map((file: any) => {
+          // Ensure base64 is a string and not double-encoded
+          let base64Data = file.base64;
+          if (typeof base64Data !== 'string') {
+            base64Data = String(base64Data);
+          }
+          // Remove any data URL prefix if present (shouldn't be, but safety check)
+          if (base64Data.includes(',')) {
+            base64Data = base64Data.split(',')[1];
+          }
+          
+          return {
+            fileName: file.fileName || 'unknown',
+            base64: base64Data, // Store base64 string directly
+            mimeType: file.mimeType || 'application/octet-stream'
+          };
+        });
+        // Append to existing files
         booking.confirmationFiles = [...(booking.confirmationFiles || []), ...newFiles];
       }
 
+      booking.updatedAt = new Date();
       await booking.save();
 
       // Populate travel request if available
-      const request = await TravelRequest.findOne({ uuid: booking.requestUuid }).lean();
-      let travelRequest = null;
-      if (request) {
-        const employee = await User.findOne({ uuid: request.employeeId }).lean();
-        travelRequest = {
-          ...request,
-          employeeName: employee?.name || request.employeeId
+      const populatedRequest = await TravelRequest.findOne({ uuid: booking.requestUuid }).lean();
+      let travelRequestData = null;
+      if (populatedRequest) {
+        const employee = await User.findOne({ uuid: populatedRequest.employeeId }).lean();
+        travelRequestData = {
+          ...populatedRequest,
+          employeeName: employee?.name || populatedRequest.employeeId
         };
       }
 
       res.json({
         uuid: booking.uuid,
         requestUuid: booking.requestUuid,
-        employeeUuid: booking.employeeId,
         flight: booking.flight,
         hotel: booking.hotel,
         cab: booking.cab,
         itineraryHtml: booking.itineraryHtml,
-        flightConfirmationUrl: booking.flightConfirmationUrl,
-        hotelConfirmationUrl: booking.hotelConfirmationUrl,
-        cabConfirmationUrl: booking.cabConfirmationUrl,
         confirmationFiles: booking.confirmationFiles,
+        status: booking.status,
+        from: booking.from,
+        to: booking.to,
         createdAt: booking.createdAt,
         updatedAt: booking.updatedAt,
-        travelRequest: travelRequest
+        confirmedAt: booking.confirmedAt,
+        travelRequest: travelRequestData
       });
     } catch (error) {
       res.status(500).json({ 

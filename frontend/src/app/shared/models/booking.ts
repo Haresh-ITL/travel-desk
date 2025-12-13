@@ -59,13 +59,19 @@ export interface PaymentIntentResponse {
 // API Response interfaces for backend integration
 export type BookingStatus = 'PENDING' | 'IN_PROGRESS' | 'CONFIRMED' | 'CANCELLED';
 
+export interface ConfirmationFile {
+  fileName: string;
+  base64: string;
+  mimeType?: string;
+}
+
 export interface BookingWithDetails {
   uuid: string;
   requestUuid: string;
   flight?: string;
   hotel?: string | HotelBookingDetails; // Support both string (legacy) and object (new)
   cab?: string | CabDetails; // Support both string (legacy) and object (new)
-  confirmationFiles?: string[];
+  confirmationFiles?: (string | ConfirmationFile)[]; // Support both string (legacy) and object (new)
   itineraryHtml: string;
   status: BookingStatus;
   from?: string;
@@ -132,4 +138,5 @@ export interface UpdateBookingRequest {
   from?: string;
   to?: string;
   status?: BookingStatus;
+  confirmationFiles?: ConfirmationFile[];
 }

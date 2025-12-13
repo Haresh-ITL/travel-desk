@@ -1,81 +1,97 @@
 import { Schema, model } from "mongoose";
 
-export interface FlightDetails {
-  airline?: string;
-  flightNumber?: string;
-  departureAirport?: string;
-  departureTime?: Date;
-  arrivalAirport?: string;
-  arrivalTime?: Date;
+export type BookingStatus = 'PENDING' | 'IN_PROGRESS' | 'CONFIRMED' | 'CANCELLED';
+
+export interface IConfirmationFile {
+  fileName: string;
+  base64: string;
+  mimeType?: string;
 }
 
-export interface HotelDetails {
-  name?: string;
-  location?: string;
-  checkin?: Date;
-  checkout?: Date;
-  amount?: number;
+export interface IHotelDetails {
+  name: string;
+  phoneNumber: string;
+  roomNumber: string;
+  location: string;
 }
 
-export interface CabDetails {
-  provider?: string;
-  pickupTime?: Date;
-  notes?: string;
+export interface ICabDetails {
+  name: string;
+  driverName: string;
+  phoneNumber: string;
 }
 
 export interface IBooking {
   uuid: string;
   requestUuid: string;
-  employeeId: string;
-  flight?: FlightDetails;
-  hotel?: HotelDetails;
-  cab?: CabDetails;
-  confirmationFiles: string[];
-  flightConfirmationUrl?: string;
-  hotelConfirmationUrl?: string;
-  cabConfirmationUrl?: string;
-  itineraryHtml: string;     
-  createdAt?: Date;
+  flight?: string;
+  hotel?: string | IHotelDetails; // Support both string (legacy) and object (new)
+  cab?: string | ICabDetails; // Support both string (legacy) and object (new)
+  confirmationFiles: (string | IConfirmationFile)[]; // Support both string (legacy) and object (new)
+  itineraryHtml: string;
+  status: BookingStatus;
+  from?: string;
+  to?: string;
+  createdAt: Date;
   updatedAt?: Date;
+  confirmedAt?: Date;
 }
-
-const flightDetailsSchema = new Schema<FlightDetails>({
-  airline: { type: String },
-  flightNumber: { type: String },
-  departureAirport: { type: String },
-  departureTime: { type: Date },
-  arrivalAirport: { type: String },
-  arrivalTime: { type: Date }
-}, { _id: false });
-
-const hotelDetailsSchema = new Schema<HotelDetails>({
-  name: { type: String },
-  location: { type: String },
-  checkin: { type: Date },
-  checkout: { type: Date },
-  amount: { type: Number }
-}, { _id: false });
-
-const cabDetailsSchema = new Schema<CabDetails>({
-  provider: { type: String },
-  pickupTime: { type: Date },
-  notes: { type: String }
-}, { _id: false });
 
 const bookingSchema = new Schema<IBooking>({
   uuid: { type: String, required: true, unique: true },
   requestUuid: { type: String, required: true },
-  employeeId: { type: String, required: true },
-  flight: { type: flightDetailsSchema },
-  hotel: { type: hotelDetailsSchema },
-  cab: { type: cabDetailsSchema },
-  confirmationFiles: [{ type: String }],
-  flightConfirmationUrl: { type: String },
-  hotelConfirmationUrl: { type: String },
-  cabConfirmationUrl: { type: String },
-  itineraryHtml: { type: String, required: true }
+  flight: { type: String },
+  hotel: { 
+    type: Schema.Types.Mixed, // Support both string and object
+    validate: {
+      validator: function(v: any) {
+        // Allow string (legacy) or object with required fields
+        return typeof v === 'string' || 
+               (typeof v === 'object' && v !== null && 
+                typeof v.name === 'string' && 
+                typeof v.phoneNumber === 'string' &&
+                typeof v.roomNumber === 'string' &&
+                typeof v.location === 'string');
+      },
+      message: 'Hotel must be either a string or an object with name, phoneNumber, roomNumber, and location'
+    }
+  },
+  cab: { 
+    type: Schema.Types.Mixed, // Support both string and object
+    validate: {
+      validator: function(v: any) {
+        // Allow string (legacy) or object with required fields
+        return typeof v === 'string' || 
+               (typeof v === 'object' && v !== null && 
+                typeof v.name === 'string' && 
+                typeof v.driverName === 'string' && 
+                typeof v.phoneNumber === 'string');
+      },
+      message: 'Cab must be either a string or an object with name, driverName, and phoneNumber'
+    }
+  },
+  confirmationFiles: [{ 
+    type: Schema.Types.Mixed, // Support both string (legacy) and object (new)
+    validate: {
+      validator: function(v: any) {
+        // Allow string (legacy) or object with fileName and base64
+        return typeof v === 'string' || 
+               (typeof v === 'object' && v !== null && 
+                typeof v.fileName === 'string' && 
+                typeof v.base64 === 'string');
+      },
+      message: 'Confirmation file must be either a string or an object with fileName and base64'
+    }
+  }],
+  itineraryHtml: { type: String, required: true },
+  status: { type: String, required: true, default: "PENDING", enum: ["PENDING", "IN_PROGRESS", "CONFIRMED", "CANCELLED"] },
+  from: { type: String },
+  to: { type: String },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date },
+  confirmedAt: { type: Date } // When booking was confirmed by travel admin
 }, {
-  timestamps: true
+  timestamps: false // We're managing timestamps manually
 });
 
 export const Booking = model<IBooking>("Booking", bookingSchema);
