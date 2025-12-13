@@ -13,6 +13,7 @@ import { MatSlideToggleModule, MatSlideToggleChange } from '@angular/material/sl
 import { UserRole } from '../../shared/models';
 import { AuthService } from '../services/auth.service';
 import { filter, Subscription } from 'rxjs';
+import { ChatbotComponent } from '../../shared/components/chatbot/chatbot.component';
 
 interface MenuItem {
   label: string;
@@ -35,7 +36,8 @@ interface MenuItem {
     MatButtonModule,
     MatMenuModule,
     MatChipsModule,
-    MatSlideToggleModule
+    MatSlideToggleModule,
+    ChatbotComponent
   ],
   templateUrl: './layout.component.html',
   styleUrls: ['./layout.component.scss']

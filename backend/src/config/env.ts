@@ -11,5 +11,8 @@ export const env = {
   otelServiceNamespace: process.env.OTEL_SERVICE_NAMESPACE || "travel-platform",
   otelEnvironment: process.env.OTEL_ENVIRONMENT || "dev",
   otelOtlpEndpoint: process.env.OTEL_EXPORTER_OTLP_ENDPOINT ||"",
-  otelOtlpHeaders: process.env.OTEL_EXPORTER_OTLP_HEADERS || ""
+  otelOtlpHeaders: process.env.OTEL_EXPORTER_OTLP_HEADERS || "",
+  // Perplexity AI Configuration
+  perplexityApiKey: process.env.PERPLEXITY_API_KEY || "",
+  perplexityModel: process.env.PERPLEXITY_MODEL || "llama-3.1-sonar-large-128k-online"
 };
