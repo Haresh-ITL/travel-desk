@@ -1,20 +1,81 @@
 import { Router } from "express";
 import { requireUser, requireRole } from "../middleware/auth";
 import { TravelRequest } from "../models/travel-request";
+import { User } from "../models/user";
+import { Role } from "../models/role";
 
 export const managerRouter = Router();
+
+// Helper function to format travel request with populated data
+async function formatTravelRequest(tr: any) {
+  const employee = await User.findOne({ uuid: tr.employeeId });
+  const employeeRole = employee ? await Role.findOne({ uuid: employee.roleId }) : null;
+  let primaryManager = null;
+  let primaryManagerRole = null;
+  
+  if (tr.primaryManagerId) {
+    primaryManager = await User.findOne({ uuid: tr.primaryManagerId });
+    if (primaryManager) {
+      primaryManagerRole = await Role.findOne({ uuid: primaryManager.roleId });
+    }
+  }
+
+  return {
+    uuid: tr.uuid,
+    employeeUuid: tr.employeeId,
+    employeeName: employee?.name || "",
+    from: tr.from,
+    to: tr.to,
+    travelType: tr.travelType,
+    modeOfTransport: tr.modeOfTransport,
+    startDate: tr.startDate,
+    endDate: tr.endDate,
+    purpose: tr.purpose,
+    status: tr.status,
+    primaryManagerUuid: tr.primaryManagerId,
+    primaryManagerName: primaryManager?.name || "",
+    managerComment: tr.managerComment,
+    idProofUrl: tr.idProofUrl,
+    passportUrl: tr.passportUrl,
+    createdAt: tr.createdAt,
+    updatedAt: tr.updatedAt
+  };
+}
+
+// Get all requests for this manager
+managerRouter.get(
+  "/requests",
+  requireUser,
+  requireRole(["ROLE_MANAGER", "MANAGER"]),
+  async (req, res) => {
+    try {
+      const list = await TravelRequest.find({
+        primaryManagerId: req.user!.uuid
+      });
+      const formatted = await Promise.all(list.map(formatTravelRequest));
+      res.json(formatted);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch requests" });
+    }
+  }
+);
 
 // pending requests for this manager
 managerRouter.get(
   "/requests/pending",
   requireUser,
-  requireRole(["ROLE_MANAGER"]),
+  requireRole(["ROLE_MANAGER", "MANAGER"]),
   async (req, res) => {
-    const list = await TravelRequest.find({
-      managerId: req.user!.uuid,
-      status: "PENDING"
-    });
-    res.json(list);
+    try {
+      const list = await TravelRequest.find({
+        primaryManagerId: req.user!.uuid,
+        status: "PENDING"
+      });
+      const formatted = await Promise.all(list.map(formatTravelRequest));
+      res.json(formatted);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch pending requests" });
+    }
   }
 );
 
@@ -22,17 +83,23 @@ managerRouter.get(
 managerRouter.put(
   "/requests/:uuid/decision",
   requireUser,
-  requireRole(["ROLE_MANAGER"]),
+  requireRole(["ROLE_MANAGER", "MANAGER"]),
   async (req, res) => {
-    const { status, comment } = req.body; // APPROVED / REJECTED
-    const tr = await TravelRequest.findOne({ uuid: req.params.uuid });
-    if (!tr) return res.status(404).json({ message: "Not found" });
-    if (tr.managerId !== req.user!.uuid)
-      return res.status(403).json({ message: "Forbidden" });
+    try {
+      const { status, comment } = req.body; // APPROVED / REJECTED
+      const tr = await TravelRequest.findOne({ uuid: req.params.uuid });
+      if (!tr) return res.status(404).json({ message: "Not found" });
+      if (tr.primaryManagerId !== req.user!.uuid)
+        return res.status(403).json({ message: "Forbidden" });
 
-    tr.status = status;
-    tr.managerComment = comment;
-    await tr.save();
-    res.json(tr);
+      tr.status = status;
+      tr.managerComment = comment;
+      await tr.save();
+      
+      const formatted = await formatTravelRequest(tr);
+      res.json(formatted);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update request" });
+    }
   }
 );

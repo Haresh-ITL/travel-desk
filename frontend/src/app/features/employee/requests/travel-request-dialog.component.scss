@@ -328,6 +328,34 @@ mat-dialog-actions {
       }
     }
   }
+
+  // Datepicker popup styling - ensure it appears above dialog
+  .mat-datepicker-popup {
+    z-index: 10000 !important;
+  }
+
+  .cdk-overlay-container {
+    z-index: 10000 !important;
+  }
+
+  .mat-datepicker-content {
+    z-index: 10000 !important;
+  }
+}
+
+// Global datepicker styling to ensure it appears above dialogs
+::ng-deep {
+  .cdk-overlay-container {
+    z-index: 10000 !important;
+  }
+
+  .mat-datepicker-popup {
+    z-index: 10000 !important;
+  }
+
+  .mat-datepicker-content {
+    z-index: 10000 !important;
+  }
 }
 
 // Dark theme

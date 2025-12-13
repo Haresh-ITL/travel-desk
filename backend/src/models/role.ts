@@ -2,7 +2,7 @@ import { Schema, model } from "mongoose";
 
 export interface IRole {
   uuid: string;
-  name: "EMPLOYEE" | "MANAGER" | "TRAVEL_DESK_ADMIN";
+  name: "EMPLOYEE" | "MANAGER" | "TRAVEL_DESK_ADMIN" | "ORG_ADMIN";
 }
 
 const roleSchema = new Schema<IRole>({

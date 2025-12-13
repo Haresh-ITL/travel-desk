@@ -8,6 +8,7 @@ import { User } from "./models/user";
 import { authRouter } from "./routes/auth-routes";
 import { employeeRouter } from "./routes/employee-routes";
 import { managerRouter } from "./routes/manager-routes";
+import { adminRouter } from "./routes/admin-routes";
 import { uuid } from "uuidv4";
 import { travelDeskRouter } from "./routes/travel-desk-routes";
 import { paymentRouter } from "./routes/paymentRoutes";
@@ -21,6 +22,7 @@ app.use("/uploads", express.static("uploads"));
 app.use("/api/auth", authRouter);
 app.use("/api/employee", employeeRouter);
 app.use("/api/manager", managerRouter);
+app.use("/api/admin", adminRouter);
 app.use("/api/travel-desk", travelDeskRouter);
 app.use("/api/payments", paymentRouter);
 app.use("/api/chatbot", chatbotRouter);
@@ -31,11 +33,13 @@ const seed = async () => {
     const empRoleUuid = uuid();
     const mgrRoleUuid = uuid();
     const deskRoleUuid = uuid();
+    const adminRoleUuid = uuid();
 
     await Role.insertMany([
       { uuid: empRoleUuid, name: "EMPLOYEE" },
       { uuid: mgrRoleUuid, name: "MANAGER" },
-      { uuid: deskRoleUuid, name: "TRAVEL_DESK_ADMIN" }
+      { uuid: deskRoleUuid, name: "TRAVEL_DESK_ADMIN" },
+      { uuid: adminRoleUuid, name: "ORG_ADMIN" }
     ]);
 
     const hash = await bcrypt.hash("password", 10);
@@ -62,6 +66,14 @@ const seed = async () => {
         email: "desk@test.com",
         password: hash,
         roleId: deskRoleUuid,
+        managerIds: []
+      },
+      {
+        uuid: uuid(),
+        name: "Org Admin",
+        email: "admin@test.com",
+        password: hash,
+        roleId: adminRoleUuid,
         managerIds: []
       }
     ]);

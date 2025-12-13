@@ -8,7 +8,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatNativeDateModule } from '@angular/material/core';
+import { MatNativeDateModule, provideNativeDateAdapter } from '@angular/material/core';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { TravelType, TransportMode, User } from '../../../shared/models';
 import { EmployeeService } from '../../../core/services/employee.service';
@@ -29,6 +29,7 @@ import { EmployeeService } from '../../../core/services/employee.service';
     MatNativeDateModule,
     MatProgressSpinnerModule
   ],
+  providers: [provideNativeDateAdapter()],
   templateUrl: './travel-request-dialog.component.html',
   styleUrls: ['./travel-request-dialog.component.scss']
 })
@@ -39,6 +40,7 @@ export class TravelRequestDialogComponent implements OnInit {
   TransportMode = TransportMode;
   isLoading = false;
   minDate = new Date();
+  minEndDate: Date | null = null;
 
   constructor(
     private fb: FormBuilder,
@@ -53,7 +55,7 @@ export class TravelRequestDialogComponent implements OnInit {
       startDate: ['', Validators.required],
       endDate: ['', Validators.required],
       purpose: ['', [Validators.required, Validators.minLength(10)]],
-      managerId: ['', Validators.required]
+      managerId: [''] // Will be conditionally required based on managers availability
     });
   }
 
@@ -65,17 +67,45 @@ export class TravelRequestDialogComponent implements OnInit {
       Validators.required,
       this.endDateAfterStartDate.bind(this)
     ]);
+
+    // Update min end date when start date changes
+    this.requestForm.get('startDate')?.valueChanges.subscribe((startDate) => {
+      if (startDate) {
+        this.minEndDate = new Date(startDate);
+        this.minEndDate.setDate(this.minEndDate.getDate() + 1);
+        this.requestForm.get('endDate')?.updateValueAndValidity();
+      } else {
+        this.minEndDate = null;
+      }
+    });
+
+    // Update end date validation when start date changes
+    this.requestForm.get('startDate')?.valueChanges.subscribe(() => {
+      this.requestForm.get('endDate')?.updateValueAndValidity();
+    });
   }
 
   loadManagers(): void {
     this.employeeService.getMappedManagers().subscribe({
       next: (managers) => {
         this.managers = managers;
+        // If managers exist, make managerId required
+        if (managers.length > 0) {
+          this.requestForm.get('managerId')?.setValidators([Validators.required]);
+        } else {
+          // If no managers, make managerId optional
+          this.requestForm.get('managerId')?.clearValidators();
+        }
+        this.requestForm.get('managerId')?.updateValueAndValidity();
+        // Force form to re-check validity
+        this.requestForm.updateValueAndValidity();
       },
       error: () => {
-        // If no managers, make managerId optional
+        // If error loading managers, make managerId optional
         this.requestForm.get('managerId')?.clearValidators();
         this.requestForm.get('managerId')?.updateValueAndValidity();
+        // Force form to re-check validity
+        this.requestForm.updateValueAndValidity();
       }
     });
   }
@@ -84,7 +114,18 @@ export class TravelRequestDialogComponent implements OnInit {
     const startDate = this.requestForm?.get('startDate')?.value;
     const endDate = control.value;
     
-    if (startDate && endDate && new Date(endDate) < new Date(startDate)) {
+    if (!startDate || !endDate) {
+      return null; // Let required validator handle empty values
+    }
+    
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    
+    // Reset time to compare dates only
+    start.setHours(0, 0, 0, 0);
+    end.setHours(0, 0, 0, 0);
+    
+    if (end < start) {
       return { endDateBeforeStart: true };
     }
     return null;
@@ -95,8 +136,13 @@ export class TravelRequestDialogComponent implements OnInit {
   }
 
   save(): void {
+    // Mark all fields as touched to show validation errors
+    Object.keys(this.requestForm.controls).forEach(key => {
+      this.requestForm.get(key)?.markAsTouched();
+    });
+
     if (this.requestForm.invalid) {
-      this.requestForm.markAllAsTouched();
+      console.log('Form is invalid:', this.getFormValidationErrors());
       return;
     }
 
@@ -104,13 +150,22 @@ export class TravelRequestDialogComponent implements OnInit {
 
     // Create FormData (backend expects multipart/form-data, but no files needed - documents come from profile)
     const formData = new FormData();
-    formData.append('from', this.requestForm.get('from')?.value);
-    formData.append('to', this.requestForm.get('to')?.value);
-    formData.append('travelType', this.requestForm.get('travelType')?.value);
-    formData.append('modeOfTransport', this.requestForm.get('modeOfTransport')?.value);
-    formData.append('startDate', new Date(this.requestForm.get('startDate')?.value).toISOString());
-    formData.append('endDate', new Date(this.requestForm.get('endDate')?.value).toISOString());
-    formData.append('purpose', this.requestForm.get('purpose')?.value);
+    formData.append('from', this.requestForm.get('from')?.value || '');
+    formData.append('to', this.requestForm.get('to')?.value || '');
+    formData.append('travelType', this.requestForm.get('travelType')?.value || '');
+    formData.append('modeOfTransport', this.requestForm.get('modeOfTransport')?.value || '');
+    
+    const startDate = this.requestForm.get('startDate')?.value;
+    const endDate = this.requestForm.get('endDate')?.value;
+    
+    if (startDate) {
+      formData.append('startDate', new Date(startDate).toISOString());
+    }
+    if (endDate) {
+      formData.append('endDate', new Date(endDate).toISOString());
+    }
+    
+    formData.append('purpose', this.requestForm.get('purpose')?.value || '');
     formData.append('managerId', this.requestForm.get('managerId')?.value || '');
     // No files appended - documents will be automatically retrieved from profile
 
@@ -125,6 +180,25 @@ export class TravelRequestDialogComponent implements OnInit {
         alert('Failed to create travel request. Please try again.');
       }
     });
+  }
+
+  getFormValidationErrors(): any {
+    const errors: any = {};
+    Object.keys(this.requestForm.controls).forEach(key => {
+      const controlErrors = this.requestForm.get(key)?.errors;
+      if (controlErrors) {
+        errors[key] = controlErrors;
+      }
+    });
+    return errors;
+  }
+
+  isFormValid(): boolean {
+    // Force validation update
+    this.requestForm.updateValueAndValidity();
+    
+    // Check if form is valid
+    return this.requestForm.valid;
   }
 
   cancel(): void {

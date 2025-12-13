@@ -6,7 +6,9 @@ export interface IUser {
   email: string;
   password: string;
   roleId: string;        
-  managerIds: string[];  
+  managerIds: string[];
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 const userSchema = new Schema<IUser>({
@@ -16,6 +18,8 @@ const userSchema = new Schema<IUser>({
   password: { type: String, required: true },
   roleId: { type: String, required: true },
   managerIds: [{ type: String }]
+}, {
+  timestamps: true
 });
 
 export const User = model<IUser>("User", userSchema);
