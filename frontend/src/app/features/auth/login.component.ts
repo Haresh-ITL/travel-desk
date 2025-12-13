@@ -31,20 +31,22 @@ import { AuthService } from '../../core/services/auth.service';
   animations: [
     trigger('fadeInUp', [
       transition(':enter', [
-        style({ opacity: 0, transform: 'translateY(30px)' }),
-        animate('600ms cubic-bezier(0.35, 0, 0.25, 1)', style({ opacity: 1, transform: 'translateY(0)' }))
+        style({ opacity: 0, transform: 'translateY(50px) scale(0.9)' }),
+        animate('800ms cubic-bezier(0.34, 1.56, 0.64, 1)', 
+          style({ opacity: 1, transform: 'translateY(0) scale(1)' }))
       ])
     ]),
     trigger('slideIn', [
       transition(':enter', [
-        style({ opacity: 0, transform: 'translateX(-20px)' }),
-        animate('400ms ease-out', style({ opacity: 1, transform: 'translateX(0)' }))
+        style({ opacity: 0, transform: 'translateX(-30px) scale(0.95)' }),
+        animate('600ms cubic-bezier(0.34, 1.56, 0.64, 1)', 
+          style({ opacity: 1, transform: 'translateX(0) scale(1)' }))
       ])
     ]),
     trigger('pulse', [
       state('default', style({ transform: 'scale(1)' })),
-      state('pulse', style({ transform: 'scale(1.05)' })),
-      transition('default <=> pulse', animate('300ms ease-in-out'))
+      state('pulse', style({ transform: 'scale(1.08)' })),
+      transition('default <=> pulse', animate('400ms cubic-bezier(0.34, 1.56, 0.64, 1)'))
     ])
   ]
 })

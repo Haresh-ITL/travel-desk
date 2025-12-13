@@ -20,13 +20,6 @@
       <span class="spacer"></span>
       
       <div class="toolbar-actions">
-        <mat-slide-toggle 
-          [checked]="isDarkTheme" 
-          (change)="toggleTheme($event)"
-          class="theme-toggle">
-          <mat-icon>{{ isDarkTheme ? 'dark_mode' : 'light_mode' }}</mat-icon>
-        </mat-slide-toggle>
-        
         <mat-chip [color]="getRoleColor()" highlighted class="role-chip">
           {{ getRoleDisplay() }}
         </mat-chip>

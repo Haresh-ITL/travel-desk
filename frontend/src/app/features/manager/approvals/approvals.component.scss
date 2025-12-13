@@ -59,13 +59,109 @@
   }
 }
 
-.approvals-sidenav-container {
-  height: calc(100vh - 250px);
-  min-height: 500px;
+.status-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.status-card {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  .status-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    mat-icon {
+      font-size: 24px;
+      width: 24px;
+      height: 24px;
+      color: white;
+    }
+
+    &.total {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    &.pending {
+      background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%);
+    }
+
+    &.approved {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    }
+
+    &.booked {
+      background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+    }
+
+    &.rejected {
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    }
+  }
+
+  .status-info {
+    flex: 1;
+
+    .status-count {
+      font-size: 24px;
+      font-weight: 700;
+      color: #1a202c;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+
+    .status-label {
+      font-size: 14px;
+      color: #718096;
+      font-weight: 500;
+    }
+  }
+}
+
+.approvals-toolbar {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 24px;
+  align-items: center;
+
+  .search-field {
+    flex: 1;
+    max-width: 400px;
+  }
+
+  .status-filter-field {
+    width: 200px;
+  }
+}
+
+.table-wrapper {
+  width: 100%;
 }
 
 .table-container {
   overflow: auto;
+  max-height: calc(100vh - 300px);
+  min-height: 500px;
 }
 
 .approvals-table {
@@ -81,68 +177,229 @@
   }
 }
 
+// Status chip colors
+::ng-deep {
+  .status-chip-pending {
+    background-color: #f59e0b !important;
+    color: white !important;
+  }
+
+  .status-chip-approved {
+    background-color: #10b981 !important;
+    color: white !important;
+  }
+
+  .status-chip-booked {
+    background-color: #2563eb !important;
+    color: white !important;
+  }
+
+  .status-chip-rejected {
+    background-color: #ef4444 !important;
+    color: white !important;
+  }
+}
+
+// Full-screen drawer overlay
+.drawer-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  display: flex;
+  justify-content: flex-end;
+  align-items: stretch;
+  animation: fadeIn 0.3s ease;
+}
+
+.drawer-panel {
+  width: 500px;
+  max-width: 90vw;
+  height: 100vh;
+  background: #f5f5f5;
+  box-shadow: -2px 0 16px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  animation: slideIn 0.3s ease;
+  overflow: hidden;
+}
+
 .drawer-content {
-  width: 400px;
-  padding: 24px;
+  width: 100%;
+  padding: 0;
   display: flex;
   flex-direction: column;
   height: 100%;
+  background: #f5f5f5;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
 }
 
 .drawer-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid #e0e0e0;
+  padding: 24px 24px 20px 24px;
+  background: linear-gradient(135deg, #1e40af 0%, #2563eb 50%, #3b82f6 100%);
+  color: white;
+  margin-bottom: 0;
 
   h2 {
     margin: 0;
     font-size: 20px;
     font-weight: 600;
+    color: white;
+  }
+
+  button {
+    color: white !important;
+
+    &:hover {
+      background-color: rgba(255, 255, 255, 0.1) !important;
+    }
   }
 }
 
 .drawer-body {
   flex: 1;
+  padding: 24px;
+  overflow-y: auto;
 
   .detail-item {
-    margin-bottom: 20px;
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #e5e7eb;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 4px;
+
+    &:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+      padding-bottom: 0;
+    }
 
     .label {
-      font-size: 12px;
-      color: #718096;
+      font-size: 14px;
+      color: #6b7280;
       font-weight: 500;
-      text-transform: uppercase;
     }
 
     .value {
       font-size: 16px;
-      color: #1a202c;
-      font-weight: 500;
+      color: #1f2937;
+      font-weight: 400;
+      line-height: 1.5;
+      word-break: break-word;
+
+      mat-chip {
+        display: inline-flex;
+        align-items: center;
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 13px;
+        font-weight: 600;
+      }
     }
+  }
+
+  .full-width {
+    width: 100%;
+    margin-top: 16px;
   }
 }
 
 .drawer-actions {
-  padding-top: 16px;
-  border-top: 1px solid #e0e0e0;
+  padding: 20px 24px;
+  border-top: 1px solid #e5e7eb;
+  background: white;
+  margin-top: auto;
   display: flex;
   flex-direction: column;
   gap: 12px;
 
   button {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
+    width: 100%;
+    padding: 12px;
+    font-weight: 500;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+
+    &:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(37, 99, 235, 0.2);
+    }
   }
 }
 
-.full-width {
-  width: 100%;
+// Dark theme support
+:host-context(.dark-theme) {
+  .drawer-panel {
+    background: #1a1a1a;
+  }
+
+  .drawer-content {
+    background: #1a1a1a;
+  }
+
+  .drawer-header {
+    background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 50%, #2563eb 100%);
+  }
+
+  .drawer-body {
+    .detail-item {
+      border-bottom-color: #404040;
+
+      .label {
+        color: #9ca3af;
+      }
+
+      .value {
+        color: #e5e7eb;
+      }
+    }
+  }
+
+  .drawer-actions {
+    background: #2d2d2d;
+    border-top-color: #404040;
+  }
+
+  .status-card {
+    background: #2d2d2d;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+
+    &:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    }
+
+    .status-info {
+      .status-count {
+        color: #e0e0e0;
+      }
+
+      .status-label {
+        color: #b0b0b0;
+      }
+    }
+  }
 }

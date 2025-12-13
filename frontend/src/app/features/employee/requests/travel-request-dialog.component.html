@@ -52,15 +52,10 @@
             </mat-select>
             <mat-error *ngIf="requestForm.get('managerId')?.hasError('required')">Required</mat-error>
           </mat-form-field>
-          
-          <div class="info-note" *ngIf="isManager">
-            <mat-icon>info</mat-icon>
-            <span>Your request will be automatically approved as a manager</span>
-          </div>
 
       <mat-form-field appearance="outline">
         <mat-label>Start Date</mat-label>
-        <input matInput [matDatepicker]="startPicker" formControlName="startDate" [min]="minDate">
+        <input matInput id="start-date-picker" [matDatepicker]="startPicker" formControlName="startDate" [min]="minDate">
         <mat-datepicker-toggle matSuffix [for]="startPicker"></mat-datepicker-toggle>
         <mat-datepicker #startPicker></mat-datepicker>
         <mat-error *ngIf="requestForm.get('startDate')?.hasError('required')">Required</mat-error>

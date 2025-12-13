@@ -9,7 +9,6 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatChipsModule } from '@angular/material/chips';
-import { MatSlideToggleModule, MatSlideToggleChange } from '@angular/material/slide-toggle';
 import { UserRole } from '../../shared/models';
 import { AuthService } from '../services/auth.service';
 import { filter, Subscription } from 'rxjs';
@@ -36,7 +35,6 @@ interface MenuItem {
     MatButtonModule,
     MatMenuModule,
     MatChipsModule,
-    MatSlideToggleModule,
     ChatbotComponent
   ],
   templateUrl: './layout.component.html',
@@ -45,7 +43,6 @@ interface MenuItem {
 export class LayoutComponent implements OnInit, OnDestroy {
   userName: string = '';
   userRole: UserRole | null = null;
-  isDarkTheme = false;
   menuItems: MenuItem[] = [];
   currentPageTitle: string = 'Dashboard';
   private routerSubscription?: Subscription;
@@ -78,11 +75,6 @@ export class LayoutComponent implements OnInit, OnDestroy {
     this.userName = this.authService.getUserName() || 'User';
     this.userRole = this.authService.getRole();
     this.filterMenuItems();
-    
-    // Load theme preference
-    const savedTheme = localStorage.getItem('theme');
-    this.isDarkTheme = savedTheme === 'dark';
-    this.applyTheme();
 
     // Track route changes to update page title
     this.updatePageTitle(this.router.url);
@@ -111,20 +103,6 @@ export class LayoutComponent implements OnInit, OnDestroy {
   filterMenuItems(): void {
     if (this.userRole) {
       this.menuItems = this.allMenuItems.filter(item => item.roles.includes(this.userRole!));
-    }
-  }
-
-  toggleTheme(event: MatSlideToggleChange): void {
-    this.isDarkTheme = event.checked;
-    localStorage.setItem('theme', this.isDarkTheme ? 'dark' : 'light');
-    this.applyTheme();
-  }
-
-  private applyTheme(): void {
-    if (this.isDarkTheme) {
-      document.body.classList.add('dark-theme');
-    } else {
-      document.body.classList.remove('dark-theme');
     }
   }
 

@@ -9,7 +9,6 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
-import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -32,7 +31,6 @@ import { TravelRequestDialogComponent } from './travel-request-dialog.component'
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
-    MatSidenavModule,
     MatDialogModule,
     MatSnackBarModule,
     MatTooltipModule
@@ -68,7 +66,10 @@ export class RequestsComponent implements OnInit, AfterViewInit {
   ) {}
 
   ngOnInit(): void {
-    this.loadRequests();
+    // Load static data for viewing
+    this.requests = this.getMockData();
+    this.calculateStatusCounts();
+    this.applyFilters();
   }
 
   loadRequests(): void {
@@ -119,7 +120,7 @@ export class RequestsComponent implements OnInit, AfterViewInit {
         from: 'New York',
         to: 'Los Angeles',
         travelType: TravelType.DOMESTIC,
-        modeOfTransport: TransportMode.TRAIN,
+        modeOfTransport: TransportMode.FLIGHT,
         startDate: new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000),
         endDate: new Date(now.getTime() + 10 * 24 * 60 * 60 * 1000),
         purpose: 'Client meeting and project discussion',
@@ -192,13 +193,217 @@ export class RequestsComponent implements OnInit, AfterViewInit {
         from: 'Denver',
         to: 'Paris',
         travelType: TravelType.INTERNATIONAL,
-        modeOfTransport: TransportMode.TRAIN,
+        modeOfTransport: TransportMode.FLIGHT,
         startDate: new Date(now.getTime() + 45 * 24 * 60 * 60 * 1000),
         endDate: new Date(now.getTime() + 52 * 24 * 60 * 60 * 1000),
         purpose: 'International trade show and exhibition',
         status: RequestStatus.APPROVED,
         managerComment: 'Approved. Please coordinate with travel desk for booking.',
         createdAt: new Date(now.getTime() - 8 * 24 * 60 * 60 * 1000)
+      },
+      {
+        uuid: '7',
+        employeeUuid: 'emp1',
+        employeeName: 'John Doe',
+        from: 'Portland',
+        to: 'San Diego',
+        travelType: TravelType.DOMESTIC,
+        modeOfTransport: TransportMode.FLIGHT,
+        startDate: new Date(now.getTime() + 12 * 24 * 60 * 60 * 1000),
+        endDate: new Date(now.getTime() + 15 * 24 * 60 * 60 * 1000),
+        purpose: 'Regional sales meeting and client presentations',
+        status: RequestStatus.PENDING,
+        createdAt: new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000)
+      },
+      {
+        uuid: '8',
+        employeeUuid: 'emp1',
+        employeeName: 'John Doe',
+        from: 'Atlanta',
+        to: 'Dubai',
+        travelType: TravelType.INTERNATIONAL,
+        modeOfTransport: TransportMode.FLIGHT,
+        startDate: new Date(now.getTime() + 25 * 24 * 60 * 60 * 1000),
+        endDate: new Date(now.getTime() + 32 * 24 * 60 * 60 * 1000),
+        purpose: 'Global strategy summit and regional office visit',
+        status: RequestStatus.BOOKED,
+        managerComment: 'All bookings confirmed. Visa approved.',
+        createdAt: new Date(now.getTime() - 12 * 24 * 60 * 60 * 1000)
+      },
+      {
+        uuid: '9',
+        employeeUuid: 'emp1',
+        employeeName: 'John Doe',
+        from: 'Phoenix',
+        to: 'Las Vegas',
+        travelType: TravelType.DOMESTIC,
+        modeOfTransport: TransportMode.TRAIN,
+        startDate: new Date(now.getTime() + 5 * 24 * 60 * 60 * 1000),
+        endDate: new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000),
+        purpose: 'Tech conference and industry networking',
+        status: RequestStatus.APPROVED,
+        managerComment: 'Approved. Conference registration confirmed.',
+        createdAt: new Date(now.getTime() - 4 * 24 * 60 * 60 * 1000)
+      },
+      {
+        uuid: '10',
+        employeeUuid: 'emp1',
+        employeeName: 'John Doe',
+        from: 'Houston',
+        to: 'Singapore',
+        travelType: TravelType.INTERNATIONAL,
+        modeOfTransport: TransportMode.FLIGHT,
+        startDate: new Date(now.getTime() + 40 * 24 * 60 * 60 * 1000),
+        endDate: new Date(now.getTime() + 47 * 24 * 60 * 60 * 1000),
+        purpose: 'Asia-Pacific business development and partnership meetings',
+        status: RequestStatus.PENDING,
+        createdAt: new Date(now.getTime() - 6 * 24 * 60 * 60 * 1000)
+      },
+      {
+        uuid: '11',
+        employeeUuid: 'emp1',
+        employeeName: 'John Doe',
+        from: 'Mumbai',
+        to: 'Delhi',
+        travelType: TravelType.DOMESTIC,
+        modeOfTransport: TransportMode.FLIGHT,
+        startDate: new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000),
+        endDate: new Date(now.getTime() + 6 * 24 * 60 * 60 * 1000),
+        purpose: 'Quarterly business review and team alignment',
+        status: RequestStatus.PENDING,
+        createdAt: new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000)
+      },
+      {
+        uuid: '12',
+        employeeUuid: 'emp1',
+        employeeName: 'John Doe',
+        from: 'Bangalore',
+        to: 'Hyderabad',
+        travelType: TravelType.DOMESTIC,
+        modeOfTransport: TransportMode.TRAIN,
+        startDate: new Date(now.getTime() + 18 * 24 * 60 * 60 * 1000),
+        endDate: new Date(now.getTime() + 20 * 24 * 60 * 60 * 1000),
+        purpose: 'Client site visit and technical consultation',
+        status: RequestStatus.APPROVED,
+        managerComment: 'Approved. Client meeting confirmed.',
+        createdAt: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+      },
+      {
+        uuid: '13',
+        employeeUuid: 'emp1',
+        employeeName: 'John Doe',
+        from: 'Chennai',
+        to: 'Kolkata',
+        travelType: TravelType.DOMESTIC,
+        modeOfTransport: TransportMode.FLIGHT,
+        startDate: new Date(now.getTime() - 10 * 24 * 60 * 60 * 1000),
+        endDate: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000),
+        purpose: 'Regional office visit and team coordination',
+        status: RequestStatus.BOOKED,
+        managerComment: 'Travel completed successfully. All expenses submitted.',
+        createdAt: new Date(now.getTime() - 20 * 24 * 60 * 60 * 1000)
+      },
+      {
+        uuid: '14',
+        employeeUuid: 'emp1',
+        employeeName: 'John Doe',
+        from: 'Pune',
+        to: 'Sydney',
+        travelType: TravelType.INTERNATIONAL,
+        modeOfTransport: TransportMode.FLIGHT,
+        startDate: new Date(now.getTime() + 50 * 24 * 60 * 60 * 1000),
+        endDate: new Date(now.getTime() + 58 * 24 * 60 * 60 * 1000),
+        purpose: 'International client presentation and partnership discussion',
+        status: RequestStatus.PENDING,
+        createdAt: new Date(now.getTime() - 4 * 24 * 60 * 60 * 1000)
+      },
+      {
+        uuid: '15',
+        employeeUuid: 'emp1',
+        employeeName: 'John Doe',
+        from: 'Ahmedabad',
+        to: 'Jaipur',
+        travelType: TravelType.DOMESTIC,
+        modeOfTransport: TransportMode.TRAIN,
+        startDate: new Date(now.getTime() + 9 * 24 * 60 * 60 * 1000),
+        endDate: new Date(now.getTime() + 11 * 24 * 60 * 60 * 1000),
+        purpose: 'Vendor meeting and contract negotiation',
+        status: RequestStatus.REJECTED,
+        managerComment: 'Rejected. Can be handled via video conference.',
+        createdAt: new Date(now.getTime() - 9 * 24 * 60 * 60 * 1000)
+      },
+      {
+        uuid: '16',
+        employeeUuid: 'emp1',
+        employeeName: 'John Doe',
+        from: 'Kochi',
+        to: 'Goa',
+        travelType: TravelType.DOMESTIC,
+        modeOfTransport: TransportMode.FLIGHT,
+        startDate: new Date(now.getTime() + 15 * 24 * 60 * 60 * 1000),
+        endDate: new Date(now.getTime() + 17 * 24 * 60 * 60 * 1000),
+        purpose: 'Team offsite and strategic planning session',
+        status: RequestStatus.APPROVED,
+        managerComment: 'Approved. Team event confirmed.',
+        createdAt: new Date(now.getTime() - 6 * 24 * 60 * 60 * 1000)
+      },
+      {
+        uuid: '17',
+        employeeUuid: 'emp1',
+        employeeName: 'John Doe',
+        from: 'New Delhi',
+        to: 'Bangalore',
+        travelType: TravelType.DOMESTIC,
+        modeOfTransport: TransportMode.FLIGHT,
+        startDate: new Date(now.getTime() + 22 * 24 * 60 * 60 * 1000),
+        endDate: new Date(now.getTime() + 25 * 24 * 60 * 60 * 1000),
+        purpose: 'Product demo and customer feedback session',
+        status: RequestStatus.PENDING,
+        createdAt: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000)
+      },
+      {
+        uuid: '18',
+        employeeUuid: 'emp1',
+        employeeName: 'John Doe',
+        from: 'Mumbai',
+        to: 'Frankfurt',
+        travelType: TravelType.INTERNATIONAL,
+        modeOfTransport: TransportMode.FLIGHT,
+        startDate: new Date(now.getTime() + 35 * 24 * 60 * 60 * 1000),
+        endDate: new Date(now.getTime() + 42 * 24 * 60 * 60 * 1000),
+        purpose: 'European market expansion and partner meetings',
+        status: RequestStatus.BOOKED,
+        managerComment: 'All bookings confirmed. Schengen visa approved.',
+        createdAt: new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000)
+      },
+      {
+        uuid: '19',
+        employeeUuid: 'emp1',
+        employeeName: 'John Doe',
+        from: 'Kolkata',
+        to: 'Bangkok',
+        travelType: TravelType.INTERNATIONAL,
+        modeOfTransport: TransportMode.FLIGHT,
+        startDate: new Date(now.getTime() + 28 * 24 * 60 * 60 * 1000),
+        endDate: new Date(now.getTime() + 33 * 24 * 60 * 60 * 1000),
+        purpose: 'Southeast Asia business development trip',
+        status: RequestStatus.APPROVED,
+        managerComment: 'Approved. Visa application in process.',
+        createdAt: new Date(now.getTime() - 11 * 24 * 60 * 60 * 1000)
+      },
+      {
+        uuid: '20',
+        employeeUuid: 'emp1',
+        employeeName: 'John Doe',
+        from: 'Hyderabad',
+        to: 'Pune',
+        travelType: TravelType.DOMESTIC,
+        modeOfTransport: TransportMode.TRAIN,
+        startDate: new Date(now.getTime() + 6 * 24 * 60 * 60 * 1000),
+        endDate: new Date(now.getTime() + 8 * 24 * 60 * 60 * 1000),
+        purpose: 'Training session and knowledge transfer',
+        status: RequestStatus.PENDING,
+        createdAt: new Date(now.getTime() - 0.5 * 24 * 60 * 60 * 1000)
       }
     ];
   }
