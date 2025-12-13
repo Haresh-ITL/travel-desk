@@ -1,0 +1,70 @@
+<div class="chatbot-container">
+  <!-- Chat Window -->
+  <div class="chat-window" [class.open]="isOpen" [class.closed]="!isOpen">
+    <div class="chat-header">
+      <div class="header-content">
+        <mat-icon class="header-icon">smart_toy</mat-icon>
+        <span class="header-title">Travel Desk Assistant</span>
+      </div>
+      <button mat-icon-button (click)="toggleChat()" class="close-button" matTooltip="Close chat">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+
+    <div class="messages-container" #messagesContainer>
+      <div 
+        *ngFor="let message of messages" 
+        class="message"
+        [class.user-message]="message.role === 'user'"
+        [class.assistant-message]="message.role === 'assistant'">
+        <div class="message-content">
+          <div class="message-text">{{ message.content }}</div>
+          <div class="message-time">{{ formatTimestamp(message.timestamp) }}</div>
+        </div>
+      </div>
+      
+      <div *ngIf="isLoading" class="message assistant-message">
+        <div class="message-content">
+          <div class="message-text typing-indicator">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="chat-input-container">
+      <mat-form-field appearance="outline" class="input-field">
+        <mat-label>Type your message...</mat-label>
+        <input 
+          matInput 
+          [(ngModel)]="currentMessage"
+          (keypress)="onKeyPress($event)"
+          [disabled]="isLoading"
+          #messageInput
+          placeholder="Ask me anything about the Travel Desk...">
+        <button 
+          mat-icon-button 
+          matSuffix 
+          (click)="sendMessage()"
+          [disabled]="!currentMessage.trim() || isLoading"
+          class="send-button">
+          <mat-icon>send</mat-icon>
+        </button>
+      </mat-form-field>
+    </div>
+  </div>
+
+  <!-- Floating Button -->
+  <button 
+    mat-fab 
+    color="primary" 
+    class="chat-toggle-button"
+    (click)="toggleChat()"
+    [matTooltip]="isOpen ? 'Close chat' : 'Open chat'">
+    <mat-icon *ngIf="!isOpen">chat</mat-icon>
+    <mat-icon *ngIf="isOpen">close</mat-icon>
+  </button>
+</div>
+
