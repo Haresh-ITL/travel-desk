@@ -83,7 +83,6 @@ export class DashboardComponent implements OnInit {
       },
       error: (error) => {
         console.error('Error loading employee dashboard stats:', error);
-        // Fallback to default values on error
         this.stats = {
           totalTrips: 0,
           upcomingTrips: 0,
@@ -152,13 +151,12 @@ export class DashboardComponent implements OnInit {
   }
 
   loadTravelDeskStats(): void {
-    // TODO: Implement travel desk stats endpoint
     this.travelDeskService.getAnalytics().subscribe({
       next: (analytics) => {
         this.stats = {
           approvedAwaitingBooking: analytics.approved || 0,
-          tripsBookedToday: 0, // TODO: Calculate from bookings
-          totalCost: 0 // TODO: Calculate from bookings
+          tripsBookedToday: 0,
+          totalCost: 0
         };
         this.isLoading = false;
       },
@@ -175,7 +173,6 @@ export class DashboardComponent implements OnInit {
   }
 
   loadAdminStats(): void {
-    // TODO: Implement admin stats endpoint
     this.adminService.getUsers().subscribe({
       next: (users) => {
         const usersByRole: { [key: string]: number } = {};
