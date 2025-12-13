@@ -195,11 +195,11 @@
     <mat-card class="wide-card">
       <h3><mat-icon>book_online</mat-icon> Quick Actions</h3>
       <div class="action-buttons">
-        <button mat-raised-button color="primary" routerLink="/travel-desk/bookings">
+        <button mat-raised-button color="primary" [routerLink]="['/travel-desk/bookings']" [queryParams]="{view: 'process'}">
           <mat-icon>add_task</mat-icon>
           Process Bookings ({{ stats.approvedAwaitingBooking }})
         </button>
-        <button mat-raised-button routerLink="/travel-desk/bookings">
+        <button mat-raised-button [routerLink]="['/travel-desk/bookings']" [queryParams]="{view: 'all'}">
           <mat-icon>list_alt</mat-icon>
           View All Bookings
         </button>

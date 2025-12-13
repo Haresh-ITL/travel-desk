@@ -20,6 +20,7 @@ export interface FlightDetails {
   arrivalTime: string;
 }
 
+// Hotel details for booking creation (old structure)
 export interface HotelDetails {
   name: string;
   location: string;
@@ -27,10 +28,19 @@ export interface HotelDetails {
   checkOutDate: string;
 }
 
+// Hotel details for booking management (new structure from database)
+export interface HotelBookingDetails {
+  name: string;
+  phoneNumber: string;
+  roomNumber: string;
+  location: string;
+}
+
+// Cab details interface for booking management (new structure)
 export interface CabDetails {
-  provider: string;
-  pickupTime: string;
-  notes: string;
+  name: string;
+  driverName: string;
+  phoneNumber: string;
 }
 
 export interface CreateBookingRequest {
@@ -44,4 +54,82 @@ export interface CreateBookingRequest {
 
 export interface PaymentIntentResponse {
   clientSecret: string;
+}
+
+// API Response interfaces for backend integration
+export type BookingStatus = 'PENDING' | 'IN_PROGRESS' | 'CONFIRMED' | 'CANCELLED';
+
+export interface BookingWithDetails {
+  uuid: string;
+  requestUuid: string;
+  flight?: string;
+  hotel?: string | HotelBookingDetails; // Support both string (legacy) and object (new)
+  cab?: string | CabDetails; // Support both string (legacy) and object (new)
+  confirmationFiles?: string[];
+  itineraryHtml: string;
+  status: BookingStatus;
+  from?: string;
+  to?: string;
+  createdAt: string | Date;
+  updatedAt?: string | Date;
+  confirmedAt?: string | Date; // When booking was confirmed by travel admin
+  travelRequest?: {
+    uuid: string;
+    employeeId: string;
+    employeeName?: string;
+    from: string;
+    to: string;
+    travelType: 'DOMESTIC' | 'INTERNATIONAL';
+    startDate: string | Date;
+    endDate: string | Date;
+    purpose: string;
+    status: string;
+    createdAt: string | Date;
+  };
+}
+
+export interface PaginationInfo {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+}
+
+export interface ProcessBookingsResponse {
+  bookings: BookingWithDetails[];
+  pagination: PaginationInfo;
+}
+
+export interface AllBookingsResponse {
+  bookings: BookingWithDetails[];
+  pagination: PaginationInfo;
+  filters: {
+    status: string | null;
+    employeeId: string | null;
+    startDate: string | null;
+    endDate: string | null;
+    travelType: string | null;
+  };
+}
+
+export interface BookingFilters {
+  status?: BookingStatus | BookingStatus[];
+  employeeId?: string;
+  startDate?: string | Date;
+  endDate?: string | Date;
+  travelType?: 'DOMESTIC' | 'INTERNATIONAL';
+  limit?: number;
+  page?: number;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+}
+
+export interface UpdateBookingRequest {
+  flight?: string;
+  hotel?: string | HotelBookingDetails;
+  cab?: string | CabDetails;
+  itineraryHtml?: string;
+  from?: string;
+  to?: string;
+  status?: BookingStatus;
 }

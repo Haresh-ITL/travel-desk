@@ -153,3 +153,16 @@ export interface ItineraryData {
     notes: string;
   };
 }
+
+// Re-export booking-related types from booking.ts
+export { 
+  BookingStatus,
+  BookingWithDetails,
+  BookingFilters,
+  PaginationInfo,
+  ProcessBookingsResponse,
+  AllBookingsResponse,
+  CabDetails,
+  HotelBookingDetails,
+  UpdateBookingRequest
+} from './booking';

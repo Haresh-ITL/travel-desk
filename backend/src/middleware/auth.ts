@@ -1,10 +1,11 @@
 import { Request, Response, NextFunction } from "express";
 import { User } from "../models/user";
+import { Role } from "../models/role";
 
 declare global {
   namespace Express {
     interface Request {
-      user?: { uuid: string; roleId: string };
+      user?: { uuid: string; roleId: string; roleName?: string };
     }
   }
 }
@@ -23,15 +24,37 @@ export const requireUser = async (
   if (!user) {
     return res.status(401).json({ message: "User not found" });
   }
-  req.user = { uuid: user.uuid, roleId: user.roleId };
+  const role = await Role.findOne({ uuid: user.roleId });
+  req.user = { 
+    uuid: user.uuid, 
+    roleId: user.roleId,
+    roleName: role?.name
+  };
   next();
 };
 
 export const requireRole =
   (allowedRoles: string[]) =>
-  (req: Request, res: Response, next: NextFunction) => {
+  async (req: Request, res: Response, next: NextFunction) => {
     if (!req.user) return res.status(401).json({ message: "Unauthorized" });
-    if (!allowedRoles.includes(req.user.roleId)) {
+    
+    // If roleName is already set, use it; otherwise fetch it
+    let userRoleName = req.user.roleName;
+    if (!userRoleName) {
+      const { Role } = await import("../models/role");
+      const role = await Role.findOne({ uuid: req.user.roleId });
+      if (!role) {
+        return res.status(403).json({ message: "Role not found" });
+      }
+      userRoleName = role.name;
+      req.user.roleName = userRoleName;
+    }
+    
+    // Normalize role names - remove "ROLE_" prefix if present for comparison
+    const normalizedUserRole = userRoleName.replace(/^ROLE_/, "");
+    const normalizedAllowedRoles = allowedRoles.map(role => role.replace(/^ROLE_/, ""));
+    
+    if (!normalizedAllowedRoles.includes(normalizedUserRole)) {
       return res.status(403).json({ message: "Forbidden" });
     }
     next();
