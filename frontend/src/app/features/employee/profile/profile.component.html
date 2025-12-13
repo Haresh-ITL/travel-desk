@@ -1,0 +1,84 @@
+<div class="profile-container">
+  <!-- User Details Section -->
+  <mat-card class="user-details-card">
+    <mat-card-header>
+      <div class="user-header">
+        <div class="avatar-wrapper">
+          <mat-icon class="avatar-icon">account_circle</mat-icon>
+        </div>
+        <div class="user-info">
+          <h2 class="user-name">{{ userName }}</h2>
+          <p class="user-role">{{ roleDisplay }}</p>
+        </div>
+      </div>
+    </mat-card-header>
+    
+    <mat-card-content>
+      <div class="user-details-grid">
+        <div class="detail-item">
+          <div class="detail-icon">
+            <mat-icon>email</mat-icon>
+          </div>
+          <div class="detail-content">
+            <span class="detail-label">Email</span>
+            <span class="detail-value">{{ userEmail }}</span>
+          </div>
+        </div>
+        
+        <div class="detail-item">
+          <div class="detail-icon">
+            <mat-icon>badge</mat-icon>
+          </div>
+          <div class="detail-content">
+            <span class="detail-label">Role</span>
+            <span class="detail-value">{{ roleDisplay }}</span>
+          </div>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Documents Section -->
+  <mat-card class="documents-card">
+    <mat-card-header>
+      <h2 class="section-title">
+        <mat-icon>description</mat-icon>
+        Documents & KYC
+      </h2>
+    </mat-card-header>
+    
+    <mat-card-content>
+      <div class="documents-grid">
+        <mat-card class="document-card" *ngFor="let doc of documents">
+          <div class="document-icon-wrapper">
+            <mat-icon [class]="doc.iconClass">{{ doc.icon }}</mat-icon>
+          </div>
+          <h4>{{ doc.name }}</h4>
+          <p [class.uploaded]="doc.uploaded">
+            <mat-icon class="status-icon">{{ doc.uploaded ? 'check_circle' : 'pending' }}</mat-icon>
+            {{ doc.uploaded ? 'Uploaded' : 'Not uploaded' }}
+          </p>
+          <div class="document-actions">
+            <button 
+              *ngIf="!doc.uploaded"
+              mat-raised-button 
+              color="primary" 
+              (click)="uploadDocument(doc.type)">
+              <mat-icon>upload</mat-icon>
+              Upload
+            </button>
+            <button 
+              *ngIf="doc.uploaded"
+              mat-raised-button 
+              color="accent"
+              (click)="viewDocument(doc)">
+              <mat-icon>visibility</mat-icon>
+              View
+            </button>
+          </div>
+        </mat-card>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>
+

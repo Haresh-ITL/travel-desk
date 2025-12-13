@@ -95,6 +95,14 @@
   }
 }
 
+mat-sidenav-content {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  position: relative;
+}
+
 .toolbar {
   background: linear-gradient(90deg, #1e40af 0%, #2563eb 50%, #3b82f6 100%) !important;
   box-shadow: 0 4px 12px rgba(30, 64, 175, 0.25);
@@ -106,6 +114,7 @@
   border-radius: 12px;
   height: 64px;
   min-height: 64px;
+  flex-shrink: 0;
 
   .toolbar-title {
     font-size: 20px;
@@ -168,10 +177,15 @@
 }
 
 .content-wrapper {
+  flex: 1;
   padding: 24px;
-  padding-top: 96px; // Account for floating toolbar (64px + 32px margin)
+  padding-top: 0;
+  margin-top: 66px; // Space for floating toolbar (64px height + 2px gap)
   background: #f5f5f5;
-  min-height: calc(100vh - 64px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  position: relative;
+  min-height: 0; // Allow flex to control height
 }
 
 // Dark theme styles
