@@ -46,4 +46,28 @@ export class ItineraryViewerComponent {
       minute: '2-digit' 
     });
   }
+
+  formatDateTime(date: Date): string {
+    return new Date(date).toLocaleString('en-US', {
+      weekday: 'short',
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  }
+
+  getTransportIcon(transportType: 'FLIGHT' | 'TRAIN' | 'BUS'): string {
+    switch (transportType) {
+      case 'FLIGHT':
+        return 'flight';
+      case 'TRAIN':
+        return 'train';
+      case 'BUS':
+        return 'directions_bus';
+      default:
+        return 'commute';
+    }
+  }
 }

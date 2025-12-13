@@ -127,31 +127,74 @@ export interface DashboardStats {
 
 // Itinerary data
 export interface ItineraryData {
+  // 1. Traveler Identification Details
   employeeName: string;
-  from: string;
-  to: string;
+  employeeId?: string;
+  designation?: string;
+  department?: string;
+  travelRequestId: string;
+  purpose: string;
+  travelType: TravelType;
   startDate: Date;
   endDate: Date;
-  itineraryHtml: string;
-  flightDetails?: {
-    airline: string;
-    flightNumber: string;
-    departureAirport: string;
-    departureTime: Date;
-    arrivalAirport: string;
-    arrivalTime: Date;
+  emergencyContact?: {
+    name: string;
+    phone: string;
+    relationship?: string;
   };
+
+  // 2. Transport Details (Flight/Train/Bus)
+  outboundJourney?: {
+    transportType: 'FLIGHT' | 'TRAIN' | 'BUS';
+    provider: string; // Airline / Transport Provider
+    number: string; // Flight / Train / Bus Number
+    from: string; // City, Airport/Station Code
+    to: string; // City, Airport/Station Code
+    departureDateTime: Date;
+    arrivalDateTime: Date;
+    seatNumber?: string;
+    bookingReference?: string; // PNR
+    ticketNumber?: string;
+  };
+  returnJourney?: {
+    transportType: 'FLIGHT' | 'TRAIN' | 'BUS';
+    provider: string;
+    number: string;
+    from: string;
+    to: string;
+    departureDateTime: Date;
+    arrivalDateTime: Date;
+    seatNumber?: string;
+    bookingReference?: string;
+    ticketNumber?: string;
+  };
+
+  // 3. Hotel Accommodation Details
   hotelDetails?: {
     name: string;
-    location: string;
-    checkin: Date;
-    checkout: Date;
+    address: string;
+    contactNumber?: string;
+    checkinDateTime: Date;
+    checkoutDateTime: Date;
+    roomType?: string; // Single/Double
+    bookingReference?: string;
   };
+
+  // 4. Cab / Local Transport Details
   cabDetails?: {
     provider: string;
-    pickupTime: Date;
-    notes: string;
+    pickupLocation: string;
+    dropLocation: string;
+    pickupDateTime: Date;
+    driverName?: string;
+    driverContact?: string;
+    vehicleNumber?: string;
   };
+
+  // Legacy fields for backward compatibility
+  from?: string;
+  to?: string;
+  itineraryHtml?: string;
 }
 
 // Re-export booking-related types from booking.ts
