@@ -63,6 +63,65 @@ travelDeskRouter.get(
   }
 );
 
+// Update travel request and set status to BOOKED (with file upload support)
+travelDeskRouter.put(
+  "/requests/:uuid/book",
+  requireUser,
+  requireRole(["ROLE_TRAVEL_DESK_ADMIN", "TRAVEL_DESK_ADMIN"]),
+  upload.fields([
+    { name: "files", maxCount: 10 },
+    { name: "bookingDocuments", maxCount: 10 }
+  ]),
+  async (req, res) => {
+    try {
+      const { uuid } = req.params;
+      console.log('PUT /requests/:uuid/book - UUID:', uuid);
+      
+      const travelRequest = await TravelRequest.findOne({ uuid });
+      
+      if (!travelRequest) {
+        console.log('Travel request not found for UUID:', uuid);
+        return res.status(404).json({ message: "Travel request not found", uuid });
+      }
+
+      console.log('Found travel request:', travelRequest.uuid, 'Status:', travelRequest.status);
+
+      // Handle file uploads
+      const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+      const uploadedFiles = files.files || [];
+      const bookingDocs = files.bookingDocuments || [];
+      
+      // Combine all uploaded files
+      const allUploadedFiles = [...uploadedFiles, ...bookingDocs];
+      
+      console.log('Uploaded files count:', allUploadedFiles.length);
+      
+      if (allUploadedFiles.length > 0) {
+        // Add new file paths to existing filePaths array
+        const newFilePaths = allUploadedFiles.map((f) => f.path);
+        travelRequest.filePaths = [...(travelRequest.filePaths || []), ...newFilePaths];
+        console.log('Added file paths:', newFilePaths);
+      }
+
+      // Update travel request status to BOOKED
+      travelRequest.status = "BOOKED";
+      await travelRequest.save();
+
+      console.log('Travel request updated successfully. New status:', travelRequest.status);
+
+      const formatted = await formatTravelRequest(travelRequest);
+      res.json(formatted);
+    } catch (error) {
+      console.error('Error updating travel request status:', error);
+      res.status(500).json({ 
+        message: "Failed to update travel request", 
+        error: error instanceof Error ? error.message : "Unknown error",
+        stack: error instanceof Error ? error.stack : undefined
+      });
+    }
+  }
+);
+
 // assign booking + itinerary (accepts JSON)
 travelDeskRouter.post(
   "/bookings",

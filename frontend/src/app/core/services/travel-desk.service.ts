@@ -16,6 +16,19 @@ export class TravelDeskService {
     return this.http.get<TravelRequest[]>(`${this.apiUrl}/requests/approved`);
   }
 
+  updateTravelRequestToBooked(requestUuid: string, files?: File[]): Observable<TravelRequest> {
+    const formData = new FormData();
+    
+    // Add files if provided
+    if (files && files.length > 0) {
+      files.forEach((file) => {
+        formData.append('files', file);
+      });
+    }
+    
+    return this.http.put<TravelRequest>(`${this.apiUrl}/requests/${requestUuid}/book`, formData);
+  }
+
   createBooking(booking: BookingDetails): Observable<void> {
     return this.http.post<void>(`${this.apiUrl}/bookings`, booking);
   }
