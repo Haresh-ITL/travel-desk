@@ -1,0 +1,100 @@
+<h2 mat-dialog-title class="dialog-title">New Travel Request</h2>
+<p class="dialog-subtitle">Complete the form below to submit your travel request</p>
+<mat-dialog-content>
+  <form [formGroup]="requestForm" class="request-form">
+    <div class="form-grid">
+      <mat-form-field appearance="outline">
+        <mat-label>From</mat-label>
+        <input matInput formControlName="from" placeholder="Origin city">
+        <mat-error *ngIf="requestForm.get('from')?.hasError('required')">Required</mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>To</mat-label>
+        <input matInput formControlName="to" placeholder="Destination city">
+        <mat-error *ngIf="requestForm.get('to')?.hasError('required')">Required</mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Travel Type</mat-label>
+        <mat-select formControlName="travelType" (selectionChange)="onTravelTypeChange()">
+          <mat-option [value]="TravelType.DOMESTIC">Domestic</mat-option>
+          <mat-option [value]="TravelType.INTERNATIONAL">International</mat-option>
+        </mat-select>
+        <mat-error *ngIf="requestForm.get('travelType')?.hasError('required')">Required</mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Mode of Transport</mat-label>
+        <mat-select formControlName="modeOfTransport">
+          <mat-option [value]="TransportMode.FLIGHT">
+            <span style="display: flex; align-items: center; gap: 8px;">
+              <mat-icon style="font-size: 20px; width: 20px; height: 20px;">flight</mat-icon>
+              <span>Flight</span>
+            </span>
+          </mat-option>
+          <mat-option [value]="TransportMode.TRAIN">
+            <span style="display: flex; align-items: center; gap: 8px;">
+              <mat-icon style="font-size: 20px; width: 20px; height: 20px;">train</mat-icon>
+              <span>Train</span>
+            </span>
+          </mat-option>
+        </mat-select>
+        <mat-error *ngIf="requestForm.get('modeOfTransport')?.hasError('required')">Required</mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" *ngIf="managers.length > 0">
+        <mat-label>Manager</mat-label>
+        <mat-select formControlName="managerId">
+          <mat-option *ngFor="let manager of managers" [value]="manager.uuid">
+            {{ manager.name }}
+          </mat-option>
+        </mat-select>
+        <mat-error *ngIf="requestForm.get('managerId')?.hasError('required')">Required</mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Start Date</mat-label>
+        <input matInput [matDatepicker]="startPicker" formControlName="startDate" [min]="minDate">
+        <mat-datepicker-toggle matSuffix [for]="startPicker"></mat-datepicker-toggle>
+        <mat-datepicker #startPicker></mat-datepicker>
+        <mat-error *ngIf="requestForm.get('startDate')?.hasError('required')">Required</mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>End Date</mat-label>
+        <input matInput [matDatepicker]="endPicker" formControlName="endDate" [min]="minDate">
+        <mat-datepicker-toggle matSuffix [for]="endPicker"></mat-datepicker-toggle>
+        <mat-datepicker #endPicker></mat-datepicker>
+        <mat-error *ngIf="requestForm.get('endDate')?.hasError('required')">Required</mat-error>
+        <mat-error *ngIf="requestForm.get('endDate')?.hasError('endDateBeforeStart')">Must be after start date</mat-error>
+      </mat-form-field>
+    </div>
+
+    <mat-form-field appearance="outline" class="purpose-field">
+      <mat-label>Purpose</mat-label>
+      <textarea matInput formControlName="purpose" rows="3" placeholder="Describe the purpose of your travel"></textarea>
+      <mat-hint>Minimum 10 characters</mat-hint>
+      <mat-error *ngIf="requestForm.get('purpose')?.hasError('required')">Required</mat-error>
+      <mat-error *ngIf="requestForm.get('purpose')?.hasError('minlength')">At least 10 characters</mat-error>
+    </mat-form-field>
+
+    <div class="info-note">
+      <mat-icon>info</mat-icon>
+      <span>Documents will be automatically retrieved from your profile</span>
+    </div>
+  </form>
+</mat-dialog-content>
+<mat-dialog-actions>
+  <button mat-button (click)="cancel()" [disabled]="isLoading">Cancel</button>
+  <button 
+    mat-raised-button 
+    color="primary" 
+    (click)="save()" 
+    [disabled]="requestForm.invalid || isLoading">
+    <mat-spinner diameter="16" *ngIf="isLoading" class="spinner"></mat-spinner>
+    <span *ngIf="!isLoading">Submit</span>
+    <span *ngIf="isLoading">Submitting...</span>
+  </button>
+</mat-dialog-actions>
+

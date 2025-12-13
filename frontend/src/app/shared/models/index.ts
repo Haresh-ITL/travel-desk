@@ -20,6 +20,12 @@ export enum TravelType {
   INTERNATIONAL = 'INTERNATIONAL'
 }
 
+// Transport mode
+export enum TransportMode {
+  FLIGHT = 'FLIGHT',
+  TRAIN = 'TRAIN'
+}
+
 // User interface
 export interface User {
   uuid: string;
@@ -44,12 +50,14 @@ export interface TravelRequest {
   from: string;
   to: string;
   travelType: TravelType;
+  modeOfTransport?: TransportMode;
   startDate: Date;
   endDate: Date;
   purpose: string;
   status: RequestStatus;
   primaryManagerUuid?: string;
   primaryManagerName?: string;
+  managerComment?: string;
   idProofUrl?: string;
   passportUrl?: string;
   createdAt?: Date;

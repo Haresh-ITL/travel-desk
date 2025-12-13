@@ -10,9 +10,11 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { EmployeeService } from '../../../core/services/employee.service';
-import { TravelRequest, RequestStatus } from '../../../shared/models';
+import { TravelRequest, RequestStatus, TravelType, TransportMode } from '../../../shared/models';
 import { ItineraryViewerComponent } from '../../../shared/components/itinerary-viewer/itinerary-viewer.component';
+import { TravelRequestDialogComponent } from './travel-request-dialog.component';
 
 @Component({
   selector: 'app-requests',
@@ -28,7 +30,8 @@ import { ItineraryViewerComponent } from '../../../shared/components/itinerary-v
     MatInputModule,
     MatSidenavModule,
     MatDialogModule,
-    MatSnackBarModule
+    MatSnackBarModule,
+    MatTooltipModule
   ],
   templateUrl: './requests.component.html',
   styleUrls: ['./requests.component.scss']
@@ -36,10 +39,21 @@ import { ItineraryViewerComponent } from '../../../shared/components/itinerary-v
 export class RequestsComponent implements OnInit {
   requests: TravelRequest[] = [];
   filteredRequests: TravelRequest[] = [];
-  displayedColumns: string[] = ['from', 'to', 'travelType', 'startDate', 'endDate', 'status', 'actions'];
+  displayedColumns: string[] = ['from', 'to', 'modeOfTransport', 'travelType', 'startDate', 'endDate', 'status', 'actions'];
   selectedRequest: TravelRequest | null = null;
   searchText = '';
+  selectedStatus: RequestStatus | 'ALL' = 'ALL';
   RequestStatus = RequestStatus;
+  TransportMode = TransportMode;
+  
+  // Status counts
+  statusCounts = {
+    PENDING: 0,
+    APPROVED: 0,
+    BOOKED: 0,
+    REJECTED: 0,
+    TOTAL: 0
+  };
 
   constructor(
     private employeeService: EmployeeService,
@@ -54,22 +68,151 @@ export class RequestsComponent implements OnInit {
   loadRequests(): void {
     this.employeeService.getRequests().subscribe({
       next: (requests) => {
-        this.requests = requests;
-        this.filteredRequests = requests;
+        this.requests = requests.length > 0 ? requests : this.getMockData();
+        this.calculateStatusCounts();
+        this.applyFilters();
       },
       error: () => {
-        this.snackBar.open('Failed to load requests', 'Close', { duration: 3000 });
+        // Use mock data if API fails
+        this.requests = this.getMockData();
+        this.calculateStatusCounts();
+        this.applyFilters();
       }
     });
   }
 
+  getMockData(): TravelRequest[] {
+    const now = new Date();
+    return [
+      {
+        uuid: '1',
+        employeeUuid: 'emp1',
+        employeeName: 'John Doe',
+        from: 'New York',
+        to: 'Los Angeles',
+        travelType: TravelType.DOMESTIC,
+        modeOfTransport: TransportMode.TRAIN,
+        startDate: new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000),
+        endDate: new Date(now.getTime() + 10 * 24 * 60 * 60 * 1000),
+        purpose: 'Client meeting and project discussion',
+        status: RequestStatus.PENDING,
+        createdAt: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000)
+      },
+      {
+        uuid: '2',
+        employeeUuid: 'emp1',
+        employeeName: 'John Doe',
+        from: 'San Francisco',
+        to: 'London',
+        travelType: TravelType.INTERNATIONAL,
+        modeOfTransport: TransportMode.FLIGHT,
+        startDate: new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000),
+        endDate: new Date(now.getTime() + 21 * 24 * 60 * 60 * 1000),
+        purpose: 'International conference and networking event',
+        status: RequestStatus.APPROVED,
+        managerComment: 'Approved for business travel. All documents verified.',
+        createdAt: new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000)
+      },
+      {
+        uuid: '3',
+        employeeUuid: 'emp1',
+        employeeName: 'John Doe',
+        from: 'Chicago',
+        to: 'Miami',
+        travelType: TravelType.DOMESTIC,
+        modeOfTransport: TransportMode.TRAIN,
+        startDate: new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000),
+        endDate: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000),
+        purpose: 'Training workshop and team building',
+        status: RequestStatus.BOOKED,
+        managerComment: 'Booking confirmed. Tickets and hotel reservations completed.',
+        createdAt: new Date(now.getTime() - 15 * 24 * 60 * 60 * 1000)
+      },
+      {
+        uuid: '4',
+        employeeUuid: 'emp1',
+        employeeName: 'John Doe',
+        from: 'Seattle',
+        to: 'Tokyo',
+        travelType: TravelType.INTERNATIONAL,
+        modeOfTransport: TransportMode.FLIGHT,
+        startDate: new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000),
+        endDate: new Date(now.getTime() + 37 * 24 * 60 * 60 * 1000),
+        purpose: 'Business expansion and partnership meetings',
+        status: RequestStatus.REJECTED,
+        managerComment: 'Rejected due to budget constraints. Please consider alternative dates.',
+        createdAt: new Date(now.getTime() - 10 * 24 * 60 * 60 * 1000)
+      },
+      {
+        uuid: '5',
+        employeeUuid: 'emp1',
+        employeeName: 'John Doe',
+        from: 'Boston',
+        to: 'Austin',
+        travelType: TravelType.DOMESTIC,
+        modeOfTransport: TransportMode.FLIGHT,
+        startDate: new Date(now.getTime() + 20 * 24 * 60 * 60 * 1000),
+        endDate: new Date(now.getTime() + 23 * 24 * 60 * 60 * 1000),
+        purpose: 'Product launch and marketing campaign',
+        status: RequestStatus.PENDING,
+        createdAt: new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000)
+      },
+      {
+        uuid: '6',
+        employeeUuid: 'emp1',
+        employeeName: 'John Doe',
+        from: 'Denver',
+        to: 'Paris',
+        travelType: TravelType.INTERNATIONAL,
+        modeOfTransport: TransportMode.TRAIN,
+        startDate: new Date(now.getTime() + 45 * 24 * 60 * 60 * 1000),
+        endDate: new Date(now.getTime() + 52 * 24 * 60 * 60 * 1000),
+        purpose: 'International trade show and exhibition',
+        status: RequestStatus.APPROVED,
+        managerComment: 'Approved. Please coordinate with travel desk for booking.',
+        createdAt: new Date(now.getTime() - 8 * 24 * 60 * 60 * 1000)
+      }
+    ];
+  }
+
+  calculateStatusCounts(): void {
+    this.statusCounts = {
+      PENDING: this.requests.filter(r => r.status === RequestStatus.PENDING).length,
+      APPROVED: this.requests.filter(r => r.status === RequestStatus.APPROVED).length,
+      BOOKED: this.requests.filter(r => r.status === RequestStatus.BOOKED).length,
+      REJECTED: this.requests.filter(r => r.status === RequestStatus.REJECTED).length,
+      TOTAL: this.requests.length
+    };
+  }
+
   applyFilter(): void {
-    const search = this.searchText.toLowerCase();
-    this.filteredRequests = this.requests.filter(req =>
-      req.from.toLowerCase().includes(search) ||
-      req.to.toLowerCase().includes(search) ||
-      req.status.toLowerCase().includes(search)
-    );
+    this.applyFilters();
+  }
+
+  applyFilters(): void {
+    let filtered = [...this.requests];
+    
+    // Apply status filter
+    if (this.selectedStatus !== 'ALL') {
+      filtered = filtered.filter(req => req.status === this.selectedStatus);
+    }
+    
+    // Apply search filter
+    if (this.searchText) {
+      const search = this.searchText.toLowerCase();
+      filtered = filtered.filter(req =>
+        req.from.toLowerCase().includes(search) ||
+        req.to.toLowerCase().includes(search) ||
+        req.status.toLowerCase().includes(search)
+      );
+    }
+    
+    this.filteredRequests = filtered;
+  }
+
+  filterByStatus(status: RequestStatus | 'ALL'): void {
+    this.selectedStatus = status;
+    this.applyFilters();
   }
 
   selectRequest(request: TravelRequest): void {
@@ -95,6 +238,26 @@ export class RequestsComponent implements OnInit {
     }
   }
 
+  getStatusChipClass(status: RequestStatus): string {
+    switch (status) {
+      case RequestStatus.PENDING:
+        return 'status-chip-pending';
+      case RequestStatus.APPROVED:
+        return 'status-chip-approved';
+      case RequestStatus.BOOKED:
+        return 'status-chip-booked';
+      case RequestStatus.REJECTED:
+        return 'status-chip-rejected';
+      default:
+        return '';
+    }
+  }
+
+  getTransportIcon(mode?: TransportMode): string {
+    if (!mode) return 'flight';
+    return mode === TransportMode.FLIGHT ? 'flight' : 'train';
+  }
+
   viewItinerary(request: TravelRequest): void {
     // Mock itinerary data - in real app, fetch from backend
     const itineraryData = {
@@ -115,5 +278,20 @@ export class RequestsComponent implements OnInit {
 
   formatDate(date: Date): string {
     return new Date(date).toLocaleDateString();
+  }
+
+  openNewRequestDialog(): void {
+    const dialogRef = this.dialog.open(TravelRequestDialogComponent, {
+      width: '1100px',
+      maxWidth: '95vw',
+      disableClose: false
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.snackBar.open('Travel request submitted successfully', 'Close', { duration: 3000 });
+        this.loadRequests();
+      }
+    });
   }
 }

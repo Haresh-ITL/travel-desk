@@ -14,6 +14,103 @@
     font-size: 28px;
     font-weight: 600;
   }
+
+  .new-request-button {
+    background: linear-gradient(135deg, #1e40af 0%, #2563eb 50%, #3b82f6 100%) !important;
+    color: white !important;
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+    transition: all 0.3s ease;
+
+    &:hover {
+      background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 50%, #2563eb 100%) !important;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+      transform: translateY(-2px);
+    }
+
+    mat-icon {
+      color: white !important;
+    }
+  }
+}
+
+.status-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.status-card {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+
+
+  .status-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    mat-icon {
+      font-size: 24px;
+      width: 24px;
+      height: 24px;
+      color: white;
+    }
+
+    &.total {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    &.pending {
+      background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%);
+    }
+
+    &.approved {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    }
+
+    &.booked {
+      background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+    }
+
+    &.rejected {
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    }
+  }
+
+  .status-info {
+    flex: 1;
+
+    .status-count {
+      font-size: 24px;
+      font-weight: 700;
+      color: #1a202c;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+
+    .status-label {
+      font-size: 14px;
+      color: #718096;
+      font-weight: 500;
+    }
+  }
 }
 
 .requests-toolbar {
@@ -44,6 +141,76 @@
     &:hover {
       background-color: rgba(0, 0, 0, 0.04);
     }
+  }
+}
+
+// Status chip colors
+::ng-deep {
+  .status-chip-pending {
+    background-color: #f59e0b !important;
+    color: white !important;
+  }
+
+  .status-chip-approved {
+    background-color: #10b981 !important;
+    color: white !important;
+  }
+
+  .status-chip-booked {
+    background-color: #2563eb !important;
+    color: white !important;
+  }
+
+  .status-chip-rejected {
+    background-color: #ef4444 !important;
+    color: white !important;
+  }
+}
+
+.purpose-comment-cell {
+  max-width: 300px;
+  
+  .purpose-text {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    color: #1a202c;
+    font-size: 14px;
+    line-height: 1.4;
+
+    .purpose-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+      color: #2563eb;
+      margin-top: 2px;
+      flex-shrink: 0;
+    }
+  }
+
+  .comment-text {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    color: #4a5568;
+    font-size: 14px;
+    line-height: 1.4;
+    font-style: italic;
+
+    .comment-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+      color: #10b981;
+      margin-top: 2px;
+      flex-shrink: 0;
+    }
+  }
+
+  .no-comment {
+    color: #a0aec0;
+    font-size: 13px;
+    font-style: italic;
   }
 }
 
@@ -100,5 +267,41 @@
 
   button {
     width: 100%;
+  }
+}
+
+// Dark theme support
+:host-context(.dark-theme) {
+  .status-card {
+    background: #2d2d2d;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+
+    &:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    }
+
+    .status-info {
+      .status-count {
+        color: #e0e0e0;
+      }
+
+      .status-label {
+        color: #b0b0b0;
+      }
+    }
+  }
+
+  .purpose-comment-cell {
+    .purpose-text {
+      color: #e0e0e0;
+    }
+
+    .comment-text {
+      color: #b0b0b0;
+    }
+
+    .no-comment {
+      color: #718096;
+    }
   }
 }

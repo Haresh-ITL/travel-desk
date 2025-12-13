@@ -20,6 +20,10 @@ export class EmployeeService {
     return this.http.post<TravelRequest>(`${this.apiUrl}/requests`, request);
   }
 
+  createTravelRequest(formData: FormData): Observable<TravelRequest> {
+    return this.http.post<TravelRequest>(`${this.apiUrl}/requests`, formData);
+  }
+
   getProfile(): Observable<User> {
     return this.http.get<User>(`${this.apiUrl}/profile`);
   }

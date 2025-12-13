@@ -101,6 +101,7 @@ mat-sidenav-content {
   height: 100vh;
   overflow: hidden;
   position: relative;
+  background: #f5f5f5;
 }
 
 .toolbar {
@@ -180,7 +181,7 @@ mat-sidenav-content {
   flex: 1;
   padding: 24px;
   padding-top: 0;
-  margin-top: 66px; // Space for floating toolbar (64px height + 2px gap)
+  margin-top: 55px; // Space for floating toolbar
   background: #f5f5f5;
   overflow-y: auto;
   overflow-x: hidden;
@@ -190,6 +191,10 @@ mat-sidenav-content {
 
 // Dark theme styles
 :host-context(.dark-theme) {
+  mat-sidenav-content {
+    background: #1a1a1a;
+  }
+
   .content-wrapper {
     background: #1a1a1a;
     color: rgba(255, 255, 255, 0.87);

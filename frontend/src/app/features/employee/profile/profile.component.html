@@ -8,33 +8,22 @@
         </div>
         <div class="user-info">
           <h2 class="user-name">{{ userName }}</h2>
-          <p class="user-role">{{ roleDisplay }}</p>
+        </div>
+        <div class="user-meta">
+          <div class="meta-item">
+            <mat-icon>email</mat-icon>
+            <span>{{ userEmail }}</span>
+          </div>
+          <div class="meta-item">
+            <mat-icon>badge</mat-icon>
+            <span>{{ roleDisplay }}</span>
+          </div>
         </div>
       </div>
     </mat-card-header>
     
     <mat-card-content>
-      <div class="user-details-grid">
-        <div class="detail-item">
-          <div class="detail-icon">
-            <mat-icon>email</mat-icon>
-          </div>
-          <div class="detail-content">
-            <span class="detail-label">Email</span>
-            <span class="detail-value">{{ userEmail }}</span>
-          </div>
-        </div>
-        
-        <div class="detail-item">
-          <div class="detail-icon">
-            <mat-icon>badge</mat-icon>
-          </div>
-          <div class="detail-content">
-            <span class="detail-label">Role</span>
-            <span class="detail-value">{{ roleDisplay }}</span>
-          </div>
-        </div>
-      </div>
+      <!-- Content can be used for additional details if needed -->
     </mat-card-content>
   </mat-card>
 
