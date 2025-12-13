@@ -9,8 +9,10 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { ManagerService } from '../../../core/services/manager.service';
-import { TravelRequest, RequestStatus, ManagerDecision } from '../../../shared/models';
+import { TravelRequest, RequestStatus, ManagerDecision, TravelType, TransportMode } from '../../../shared/models';
+import { TravelRequestDialogComponent } from '../../employee/requests/travel-request-dialog.component';
 
 @Component({
   selector: 'app-approvals',
@@ -25,7 +27,8 @@ import { TravelRequest, RequestStatus, ManagerDecision } from '../../../shared/m
     MatFormFieldModule,
     MatInputModule,
     MatSidenavModule,
-    MatSnackBarModule
+    MatSnackBarModule,
+    MatDialogModule
   ],
   templateUrl: './approvals.component.html',
   styleUrls: ['./approvals.component.scss']
@@ -40,7 +43,8 @@ export class ApprovalsComponent implements OnInit {
 
   constructor(
     private managerService: ManagerService,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private dialog: MatDialog
   ) {}
 
   ngOnInit(): void {
@@ -78,12 +82,13 @@ export class ApprovalsComponent implements OnInit {
     };
 
     this.managerService.makeDecision(this.selectedRequest.uuid, decision).subscribe({
-      next: () => {
+      next: (updatedRequest) => {
         this.snackBar.open('Request approved successfully', 'Close', { duration: 3000 });
         this.loadRequests();
         this.closeDrawer();
       },
-      error: () => {
+      error: (error) => {
+        console.error('Error approving request:', error);
         this.snackBar.open('Failed to approve request', 'Close', { duration: 3000 });
       }
     });
@@ -98,12 +103,13 @@ export class ApprovalsComponent implements OnInit {
     };
 
     this.managerService.makeDecision(this.selectedRequest.uuid, decision).subscribe({
-      next: () => {
+      next: (updatedRequest) => {
         this.snackBar.open('Request rejected', 'Close', { duration: 3000 });
         this.loadRequests();
         this.closeDrawer();
       },
-      error: () => {
+      error: (error) => {
+        console.error('Error rejecting request:', error);
         this.snackBar.open('Failed to reject request', 'Close', { duration: 3000 });
       }
     });
@@ -126,5 +132,20 @@ export class ApprovalsComponent implements OnInit {
 
   formatDate(date: Date): string {
     return new Date(date).toLocaleDateString();
+  }
+
+  openNewRequestDialog(): void {
+    const dialogRef = this.dialog.open(TravelRequestDialogComponent, {
+      width: '1100px',
+      maxWidth: '95vw',
+      disableClose: false
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.snackBar.open('Travel request created and auto-approved successfully', 'Close', { duration: 3000 });
+        this.loadRequests();
+      }
+    });
   }
 }

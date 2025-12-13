@@ -7,6 +7,9 @@ import { User } from "../models/user";
 import { Role } from "../models/role";
 import path from "path";
 import fs from "fs";
+import { promisify } from "util";
+
+const readFile = promisify(fs.readFile);
 
 const upload = multer({ dest: "uploads/" });
 export const employeeRouter = Router();
@@ -101,10 +104,27 @@ employeeRouter.get(
   requireRole(["ROLE_EMPLOYEE", "EMPLOYEE"]),
   async (req, res) => {
     try {
-      const list = await TravelRequest.find({ employeeId: req.user!.uuid });
+      const employeeUuid = req.user!.uuid;
+      console.log('Fetching requests for employee:', employeeUuid);
+      
+      const list = await TravelRequest.find({ employeeId: employeeUuid });
+      console.log('Found', list.length, 'requests for employee', employeeUuid);
+      
       const formatted = await Promise.all(list.map(formatTravelRequest));
+      
+      // Log status counts for debugging
+      const statusCounts = {
+        PENDING: formatted.filter(r => r.status === 'PENDING').length,
+        APPROVED: formatted.filter(r => r.status === 'APPROVED').length,
+        BOOKED: formatted.filter(r => r.status === 'BOOKED').length,
+        REJECTED: formatted.filter(r => r.status === 'REJECTED').length,
+        TOTAL: formatted.length
+      };
+      console.log('Status counts for employee:', statusCounts);
+      
       res.json(formatted);
     } catch (error) {
+      console.error('Error fetching employee requests:', error);
       res.status(500).json({ message: "Failed to fetch requests" });
     }
   }
@@ -123,16 +143,51 @@ employeeRouter.get(
       }
 
       const role = await Role.findOne({ uuid: user.roleId });
-      res.json({
+      
+      console.log('=== Fetching Profile ===');
+      console.log('User UUID:', req.user!.uuid);
+      console.log('User documents from DB:', user.documents);
+      console.log('Documents count:', user.documents?.length || 0);
+      
+      // Format documents with base64 data
+      const documents = (user.documents || []).map(doc => {
+        const formatted = {
+          type: doc.type,
+          url: doc.url || undefined, // For backward compatibility
+          data: doc.data || undefined, // Base64 data URL
+          mimeType: doc.mimeType || undefined,
+          fileName: doc.fileName || undefined,
+          uploadedAt: doc.uploadedAt || undefined
+        };
+        console.log(`Formatted document ${doc.type}:`, {
+          hasData: !!formatted.data,
+          dataLength: formatted.data?.length || 0,
+          hasMimeType: !!formatted.mimeType,
+          hasFileName: !!formatted.fileName
+        });
+        return formatted;
+      });
+
+      console.log('Total formatted documents:', documents.length);
+      console.log('Documents array:', JSON.stringify(documents.map(d => ({ type: d.type, hasData: !!d.data })), null, 2));
+
+      const response = {
         uuid: user.uuid,
         name: user.name,
         email: user.email,
         roleName: role?.name || "",
+        documents: documents || [], // Ensure it's always an array
         createdAt: user.createdAt,
         updatedAt: user.updatedAt
-      });
+      };
+
+      console.log('Sending profile response with', documents.length, 'documents');
+      console.log('Response has documents field:', 'documents' in response);
+      console.log('Response documents is array:', Array.isArray(response.documents));
+      res.json(response);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch profile" });
+      console.error("Error fetching profile:", error);
+      res.status(500).json({ message: "Failed to fetch profile", error: error instanceof Error ? error.message : "Unknown error" });
     }
   }
 );
@@ -189,10 +244,129 @@ employeeRouter.post(
         return res.status(400).json({ message: "No file uploaded" });
       }
 
-      const fileUrl = `${req.protocol}://${req.get("host")}/uploads/${path.basename(req.file.path)}`;
-      res.json({ url: fileUrl });
+      const { type } = req.body;
+      if (!type) {
+        return res.status(400).json({ message: "Document type is required" });
+      }
+
+      const user = await User.findOne({ uuid: req.user!.uuid });
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      console.log('=== Document Upload Started ===');
+      console.log('User UUID:', req.user!.uuid);
+      console.log('Document Type:', type);
+      console.log('File Name:', req.file.originalname);
+      console.log('File Path:', req.file.path);
+      console.log('File Size:', req.file.size, 'bytes');
+      
+      // Read file and convert to base64
+      const fileBuffer = await readFile(req.file.path);
+      const base64Data = fileBuffer.toString('base64');
+      const mimeType = req.file.mimetype || 'application/octet-stream';
+      
+      // Construct data URL for response
+      const dataUrl = `data:${mimeType};base64,${base64Data}`;
+      
+      // Also keep file URL for backward compatibility
+      const fileName = path.basename(req.file.path);
+      const fileUrl = `${req.protocol}://${req.get("host")}/uploads/${fileName}`;
+      
+      console.log('File converted to base64. Size:', base64Data.length, 'characters');
+      console.log('MIME Type:', mimeType);
+      
+      // Initialize documents array if it doesn't exist
+      if (!user.documents) {
+        user.documents = [];
+        console.log('Initialized empty documents array');
+      }
+
+      // Remove existing document of the same type if it exists
+      const beforeCount = user.documents.length;
+      user.documents = user.documents.filter(doc => doc.type !== type);
+      const removedCount = beforeCount - user.documents.length;
+      if (removedCount > 0) {
+        console.log(`Removed ${removedCount} existing document(s) of type ${type}`);
+      }
+
+      // Add new document with base64 data
+      const newDocument = {
+        type: type,
+        url: fileUrl, // Keep for backward compatibility
+        data: dataUrl, // Base64 data URL
+        mimeType: mimeType,
+        fileName: req.file.originalname || fileName,
+        uploadedAt: new Date()
+      };
+
+      // Ensure documents array exists and is an array
+      if (!Array.isArray(user.documents)) {
+        user.documents = [];
+      }
+
+      // Add new document
+      user.documents.push(newDocument);
+      console.log('Added new document to array. Total documents:', user.documents.length);
+
+      // Mark the documents array as modified to ensure Mongoose saves it
+      user.markModified('documents');
+
+      // Save to database
+      const savedUser = await user.save();
+      console.log('User saved to database');
+      console.log('Document count after save:', savedUser.documents?.length || 0);
+      if (savedUser.documents && savedUser.documents.length > 0) {
+        const lastDoc = savedUser.documents[savedUser.documents.length - 1];
+        console.log('Document has data:', !!lastDoc?.data);
+        console.log('Document data length:', lastDoc?.data?.length || 0);
+      }
+
+      // Verify the save by fetching the user again
+      const verifyUser = await User.findOne({ uuid: req.user!.uuid });
+      if (verifyUser && verifyUser.documents) {
+        const savedDoc = verifyUser.documents.find(d => d.type === type);
+        console.log('Verified document from DB:', {
+          type: savedDoc?.type,
+          hasData: !!savedDoc?.data,
+          dataLength: savedDoc?.data?.length || 0,
+          mimeType: savedDoc?.mimeType,
+          fileName: savedDoc?.fileName
+        });
+      } else {
+        console.error('ERROR: Could not verify user after save!');
+      }
+      console.log('=== Document Upload Completed ===');
+
+      // Prepare response object
+      const responseData = { 
+        url: fileUrl,
+        data: dataUrl, // Base64 data URL
+        mimeType: mimeType,
+        type: type,
+        uploadedAt: newDocument.uploadedAt,
+        fileName: newDocument.fileName,
+        message: "Document saved successfully to database as base64"
+      };
+
+      console.log('Sending response with fields:', Object.keys(responseData));
+      console.log('Response data URL length:', responseData.data?.length || 0);
+      console.log('Response type:', responseData.type);
+      console.log('Response mimeType:', responseData.mimeType);
+
+      // Return the saved document with base64 data
+      res.json(responseData);
     } catch (error) {
-      res.status(500).json({ message: "Failed to upload document" });
+      console.error('=== Error uploading document ===');
+      console.error('Error details:', error);
+      if (error instanceof Error) {
+        console.error('Error message:', error.message);
+        console.error('Error stack:', error.stack);
+      }
+      res.status(500).json({ 
+        message: "Failed to upload document", 
+        error: error instanceof Error ? error.message : "Unknown error" 
+      });
     }
   }
 );
@@ -227,6 +401,73 @@ employeeRouter.get(
       res.json(managersWithRoles);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch managers" });
+    }
+  }
+);
+
+// Get employee dashboard statistics
+employeeRouter.get(
+  "/dashboard/stats",
+  requireUser,
+  requireRole(["ROLE_EMPLOYEE", "EMPLOYEE"]),
+  async (req, res) => {
+    try {
+      const employeeUuid = req.user!.uuid;
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      // Total trips - all requests for this employee
+      const totalTrips = await TravelRequest.countDocuments({ employeeId: employeeUuid });
+
+      // Upcoming trips - approved or booked requests with startDate >= today
+      const upcomingTrips = await TravelRequest.countDocuments({
+        employeeId: employeeUuid,
+        status: { $in: ["APPROVED", "BOOKED"] },
+        startDate: { $gte: today }
+      });
+
+      // Pending approvals - requests with status PENDING
+      const pendingApprovals = await TravelRequest.countDocuments({
+        employeeId: employeeUuid,
+        status: "PENDING"
+      });
+
+      const stats = {
+        totalTrips,
+        upcomingTrips,
+        pendingApprovals
+      };
+
+      console.log('Employee dashboard stats for', employeeUuid, ':', stats);
+      res.json(stats);
+    } catch (error) {
+      console.error('Error fetching employee dashboard stats:', error);
+      res.status(500).json({ message: "Failed to fetch dashboard statistics" });
+    }
+  }
+);
+
+// Debug endpoint to check user documents (for testing)
+employeeRouter.get(
+  "/profile/documents/debug",
+  requireUser,
+  requireRole(["ROLE_EMPLOYEE", "EMPLOYEE"]),
+  async (req, res) => {
+    try {
+      const user = await User.findOne({ uuid: req.user!.uuid });
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      res.json({
+        userId: user.uuid,
+        userEmail: user.email,
+        documentsCount: user.documents?.length || 0,
+        documents: user.documents || [],
+        rawDocuments: JSON.stringify(user.documents, null, 2)
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch documents", error: error instanceof Error ? error.message : "Unknown error" });
     }
   }
 );

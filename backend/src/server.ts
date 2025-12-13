@@ -44,33 +44,41 @@ const seed = async () => {
     ]);
 
     const hash = await bcrypt.hash("password", 10);
+    
+    // Generate UUIDs for users
+    const employeeUuid = uuid();
+    const managerUuid = uuid();
+    const deskAdminUuid = uuid();
+    const orgAdminUuid = uuid();
+    
+    // Create users
     await User.insertMany([
       {
-        uuid: uuid(),
-        name: "Employee One",
+        uuid: employeeUuid,
+        name: "Magesh Employee",
         email: "emp@test.com",
         password: hash,
         roleId: empRoleUuid,
-        managerIds: []
+        managerIds: [managerUuid] // Map employee to manager
       },
       {
-        uuid: uuid(),
-        name: "Manager One",
+        uuid: managerUuid,
+        name: "Magesh Manager",
         email: "mgr@test.com",
         password: hash,
         roleId: mgrRoleUuid,
         managerIds: []
       },
       {
-        uuid: uuid(),
-        name: "Travel Desk Admin",
+        uuid: deskAdminUuid,
+        name: "Travel Desk Admin Magesh",
         email: "desk@test.com",
         password: hash,
         roleId: deskRoleUuid,
         managerIds: []
       },
       {
-        uuid: uuid(),
+        uuid: orgAdminUuid,
         name: "Org Admin",
         email: "admin@test.com",
         password: hash,
@@ -78,6 +86,12 @@ const seed = async () => {
         managerIds: []
       }
     ]);
+    
+    console.log('Seed data created:');
+    console.log(`- Employee (${employeeUuid}) mapped to Manager (${managerUuid})`);
+    console.log(`- Manager: ${managerUuid}`);
+    console.log(`- Travel Desk Admin: ${deskAdminUuid}`);
+    console.log(`- Org Admin: ${orgAdminUuid}`);
   }
 };
 

@@ -74,15 +74,21 @@ export class RequestsComponent implements OnInit, AfterViewInit {
   loadRequests(): void {
     this.employeeService.getRequests().subscribe({
       next: (requests) => {
-        this.requests = requests.length > 0 ? requests : this.getMockData();
+        // Always use actual API response, even if empty
+        this.requests = requests || [];
         this.calculateStatusCounts();
         this.applyFilters();
       },
-      error: () => {
-        // Use mock data if API fails
-        this.requests = this.getMockData();
+      error: (error) => {
+        console.error('Error loading requests:', error);
+        // Only use empty array on error, don't show mock data
+        this.requests = [];
         this.calculateStatusCounts();
         this.applyFilters();
+        this.snackBar.open('Failed to load travel requests', 'Close', {
+          duration: 3000,
+          panelClass: ['error-snackbar']
+        });
       }
     });
   }
@@ -198,13 +204,19 @@ export class RequestsComponent implements OnInit, AfterViewInit {
   }
 
   calculateStatusCounts(): void {
+    // Ensure requests is an array
+    const requests = Array.isArray(this.requests) ? this.requests : [];
+    
     this.statusCounts = {
-      PENDING: this.requests.filter(r => r.status === RequestStatus.PENDING).length,
-      APPROVED: this.requests.filter(r => r.status === RequestStatus.APPROVED).length,
-      BOOKED: this.requests.filter(r => r.status === RequestStatus.BOOKED).length,
-      REJECTED: this.requests.filter(r => r.status === RequestStatus.REJECTED).length,
-      TOTAL: this.requests.length
+      PENDING: requests.filter(r => r.status === RequestStatus.PENDING).length,
+      APPROVED: requests.filter(r => r.status === RequestStatus.APPROVED).length,
+      BOOKED: requests.filter(r => r.status === RequestStatus.BOOKED).length,
+      REJECTED: requests.filter(r => r.status === RequestStatus.REJECTED).length,
+      TOTAL: requests.length
     };
+    
+    console.log('Status counts calculated:', this.statusCounts);
+    console.log('Total requests:', requests.length);
   }
 
   applyFilter(): void {

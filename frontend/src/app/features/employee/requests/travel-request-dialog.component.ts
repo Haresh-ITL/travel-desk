@@ -12,6 +12,9 @@ import { MatNativeDateModule, provideNativeDateAdapter } from '@angular/material
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { TravelType, TransportMode, User } from '../../../shared/models';
 import { EmployeeService } from '../../../core/services/employee.service';
+import { ManagerService } from '../../../core/services/manager.service';
+import { AuthService } from '../../../core/services/auth.service';
+import { UserRole } from '../../../shared/models';
 
 @Component({
   selector: 'app-travel-request-dialog',
@@ -41,11 +44,14 @@ export class TravelRequestDialogComponent implements OnInit {
   isLoading = false;
   minDate = new Date();
   minEndDate: Date | null = null;
+  isManager = false;
 
   constructor(
     private fb: FormBuilder,
     private dialogRef: MatDialogRef<TravelRequestDialogComponent>,
-    private employeeService: EmployeeService
+    private employeeService: EmployeeService,
+    private managerService: ManagerService,
+    private authService: AuthService
   ) {
     this.requestForm = this.fb.group({
       from: ['', Validators.required],
@@ -60,7 +66,18 @@ export class TravelRequestDialogComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.loadManagers();
+    // Check if user is a manager
+    const userRole = this.authService.getRole();
+    this.isManager = userRole === UserRole.MANAGER;
+    
+    // Only load managers if user is not a manager (managers don't need to select a manager)
+    if (!this.isManager) {
+      this.loadManagers();
+    } else {
+      // For managers, managerId field is not required
+      this.requestForm.get('managerId')?.clearValidators();
+      this.requestForm.get('managerId')?.updateValueAndValidity();
+    }
     
     // Add custom validator for end date
     this.requestForm.get('endDate')?.setValidators([
@@ -169,7 +186,13 @@ export class TravelRequestDialogComponent implements OnInit {
     formData.append('managerId', this.requestForm.get('managerId')?.value || '');
     // No files appended - documents will be automatically retrieved from profile
 
-    this.employeeService.createTravelRequest(formData).subscribe({
+    // Use appropriate service based on user role
+    const userRole = this.authService.getRole();
+    const service = userRole === UserRole.MANAGER 
+      ? this.managerService.createRequest(formData)
+      : this.employeeService.createTravelRequest(formData);
+
+    service.subscribe({
       next: (request) => {
         this.isLoading = false;
         this.dialogRef.close(request);

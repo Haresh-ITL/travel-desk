@@ -26,12 +26,20 @@ export enum TransportMode {
   TRAIN = 'TRAIN'
 }
 
+// User document interface
+export interface UserDocument {
+  type: string;
+  url: string;
+  uploadedAt?: Date;
+}
+
 // User interface
 export interface User {
   uuid: string;
   name: string;
   email: string;
   roleName: UserRole;
+  documents?: UserDocument[];
   createdAt?: Date;
   updatedAt?: Date;
 }

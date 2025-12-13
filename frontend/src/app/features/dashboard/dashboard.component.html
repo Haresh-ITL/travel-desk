@@ -64,12 +64,17 @@
 
   <!-- EMPLOYEE Dashboard -->
   <div *ngIf="userRole === UserRole.EMPLOYEE" class="dashboard-grid">
+    <div *ngIf="isLoading" class="loading-overlay">
+      <mat-spinner diameter="50"></mat-spinner>
+      <p>Loading dashboard statistics...</p>
+    </div>
+    
     <mat-card class="stat-card primary-card">
       <div class="card-icon">
         <mat-icon>flight</mat-icon>
       </div>
       <div class="card-content">
-        <h2>{{ stats.totalTrips }}</h2>
+        <h2>{{ stats.totalTrips ?? 0 }}</h2>
         <p>Total Trips</p>
       </div>
     </mat-card>
@@ -79,7 +84,7 @@
         <mat-icon>event</mat-icon>
       </div>
       <div class="card-content">
-        <h2>{{ stats.upcomingTrips }}</h2>
+        <h2>{{ stats.upcomingTrips ?? 0 }}</h2>
         <p>Upcoming Trips</p>
       </div>
     </mat-card>
@@ -89,7 +94,7 @@
         <mat-icon>pending_actions</mat-icon>
       </div>
       <div class="card-content">
-        <h2>{{ stats.pendingApprovals }}</h2>
+        <h2>{{ stats.pendingApprovals ?? 0 }}</h2>
         <p>Pending Approvals</p>
       </div>
     </mat-card>

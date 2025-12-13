@@ -20,7 +20,11 @@ export class ManagerService {
     return this.http.get<TravelRequest[]>(`${this.apiUrl}/requests/pending`);
   }
 
-  makeDecision(requestUuid: string, decision: ManagerDecision): Observable<void> {
-    return this.http.put<void>(`${this.apiUrl}/requests/${requestUuid}/decision`, decision);
+  createRequest(formData: FormData): Observable<TravelRequest> {
+    return this.http.post<TravelRequest>(`${this.apiUrl}/requests`, formData);
+  }
+
+  makeDecision(requestUuid: string, decision: ManagerDecision): Observable<TravelRequest> {
+    return this.http.put<TravelRequest>(`${this.apiUrl}/requests/${requestUuid}/decision`, decision);
   }
 }

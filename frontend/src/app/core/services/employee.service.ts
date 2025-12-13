@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { TravelRequest, User } from '../../shared/models';
+import { TravelRequest, User, DashboardStats } from '../../shared/models';
 
 @Injectable({
   providedIn: 'root'
@@ -32,14 +32,30 @@ export class EmployeeService {
     return this.http.put<User>(`${this.apiUrl}/profile`, profile);
   }
 
-  uploadDocument(type: string, file: File): Observable<{ url: string }> {
+  uploadDocument(type: string, file: File): Observable<{ url: string; data: string; mimeType: string; type: string; uploadedAt: Date; fileName?: string; message?: string }> {
     const formData = new FormData();
     formData.append('type', type);
     formData.append('file', file);
-    return this.http.post<{ url: string }>(`${this.apiUrl}/profile/documents`, formData);
+    
+    console.log('Service: Uploading document');
+    console.log('Type:', type);
+    console.log('File:', file.name, file.size, 'bytes');
+    console.log('File MIME type:', file.type);
+    
+    return this.http.post<{ url: string; data: string; mimeType: string; type: string; uploadedAt: Date; fileName?: string; message?: string }>(
+      `${this.apiUrl}/profile/documents`, 
+      formData,
+      {
+        reportProgress: true
+      }
+    );
   }
 
   getMappedManagers(): Observable<User[]> {
     return this.http.get<User[]>(`${this.apiUrl}/managers`);
+  }
+
+  getDashboardStats(): Observable<DashboardStats> {
+    return this.http.get<DashboardStats>(`${this.apiUrl}/dashboard/stats`);
   }
 }

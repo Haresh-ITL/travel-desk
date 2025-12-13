@@ -1,6 +1,10 @@
 <div class="approvals-container">
   <div class="approvals-header">
     <h1>Employee Requests</h1>
+    <button mat-raised-button class="new-request-button" (click)="openNewRequestDialog()">
+      <mat-icon>add</mat-icon>
+      New Request (Auto-Approved)
+    </button>
   </div>
 
   <mat-sidenav-container class="approvals-sidenav-container">

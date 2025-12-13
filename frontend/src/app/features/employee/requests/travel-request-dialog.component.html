@@ -43,15 +43,20 @@
         <mat-error *ngIf="requestForm.get('modeOfTransport')?.hasError('required')">Required</mat-error>
       </mat-form-field>
 
-      <mat-form-field appearance="outline" *ngIf="managers.length > 0">
-        <mat-label>Manager</mat-label>
-        <mat-select formControlName="managerId">
-          <mat-option *ngFor="let manager of managers" [value]="manager.uuid">
-            {{ manager.name }}
-          </mat-option>
-        </mat-select>
-        <mat-error *ngIf="requestForm.get('managerId')?.hasError('required')">Required</mat-error>
-      </mat-form-field>
+          <mat-form-field appearance="outline" *ngIf="!isManager && managers.length > 0">
+            <mat-label>Manager</mat-label>
+            <mat-select formControlName="managerId">
+              <mat-option *ngFor="let manager of managers" [value]="manager.uuid">
+                {{ manager.name }}
+              </mat-option>
+            </mat-select>
+            <mat-error *ngIf="requestForm.get('managerId')?.hasError('required')">Required</mat-error>
+          </mat-form-field>
+          
+          <div class="info-note" *ngIf="isManager">
+            <mat-icon>info</mat-icon>
+            <span>Your request will be automatically approved as a manager</span>
+          </div>
 
       <mat-form-field appearance="outline">
         <mat-label>Start Date</mat-label>
