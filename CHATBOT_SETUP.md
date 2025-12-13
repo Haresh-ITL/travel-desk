@@ -37,7 +37,7 @@ Create or update your `.env` file in the `backend` directory:
 ```env
 # Perplexity Pro Configuration
 PERPLEXITY_API_KEY=your_perplexity_api_key_here
-PERPLEXITY_MODEL=llama-3.1-sonar-large-128k-online
+PERPLEXITY_MODEL=sonar-pro
 ```
 
 #### Option 2: Fallback (No API Key Required)
@@ -53,9 +53,19 @@ If you don't provide a Perplexity API key, the chatbot will automatically use a 
 4. Copy the key and add it to your `.env` file
 
 **Available Perplexity Pro Models:**
-- `llama-3.1-sonar-large-128k-online` (default, recommended)
-- `llama-3.1-sonar-huge-128k-online` (more capable)
-- `llama-3.1-sonar-small-128k-online` (faster, cheaper)
+- `sonar-pro` (default, recommended - verified working for Pro accounts)
+- `sonar` (standard model)
+- `sonar-reasoning` (for complex reasoning tasks)
+- `llama-3.1-sonar-large-128k-online` (alternative large model)
+- `llama-3.1-sonar-huge-128k-online` (most capable, slower)
+- `llama-3.1-sonar-small-128k-online` (fastest, cheaper)
+- `sonar-small-online` (alternative small model)
+- `sonar-medium-online` (alternative medium model)
+- `sonar-large-online` (alternative large model)
+- `llama-3.1-sonar-large-32k-online` (32k context version)
+- `llama-3.1-sonar-small-32k-online` (32k context version)
+
+**Note:** Make sure to use the exact model name. The default `sonar-pro` is recommended and verified to work with Perplexity Pro accounts.
 
 **Cost Note:** Check your Perplexity Pro subscription for API usage limits and pricing.
 
@@ -127,9 +137,21 @@ The chatbot can answer questions like:
 ### Change Perplexity Model
 
 Edit `backend/src/config/env.ts` or set `PERPLEXITY_MODEL` in `.env`:
-- `llama-3.1-sonar-large-128k-online` (default, recommended)
-- `llama-3.1-sonar-huge-128k-online` (more capable)
-- `llama-3.1-sonar-small-128k-online` (faster, cheaper)
+
+**Valid Models:**
+- `sonar-pro` (default, recommended - verified working for Pro accounts)
+- `sonar` (standard model)
+- `sonar-reasoning` (for complex reasoning tasks)
+- `llama-3.1-sonar-large-128k-online` (alternative large model)
+- `llama-3.1-sonar-huge-128k-online` (most capable, slower)
+- `llama-3.1-sonar-small-128k-online` (fastest, cheaper)
+- `sonar-small-online` (alternative small model)
+- `sonar-medium-online` (alternative medium model)
+- `sonar-large-online` (alternative large model)
+- `llama-3.1-sonar-large-32k-online` (32k context version)
+- `llama-3.1-sonar-small-32k-online` (32k context version)
+
+**Important:** Use the exact model name. The code will automatically validate and use the default if an invalid model is specified.
 
 ### Modify Application Context
 

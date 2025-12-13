@@ -53,21 +53,92 @@ export class ChatbotService {
   }
 
   private buildMessages(userMessage: string, conversationHistory: Array<{ role: string; content: string }>) {
-    return [
+    // Build messages array with proper alternation
+    // Perplexity format: [system?, user, assistant, user, assistant, ...]
+    const messages: Array<{ role: "system" | "user" | "assistant"; content: string }> = [
       {
-        role: "system" as const,
+        role: "system",
         content: APPLICATION_CONTEXT,
       },
-      ...conversationHistory.map((msg) => ({
+    ];
+
+    // Filter and clean conversation history
+    const validHistory = conversationHistory
+      .filter(msg => msg.role === "user" || msg.role === "assistant")
+      .map((msg) => ({
         role: msg.role as "user" | "assistant",
         content: msg.content,
-      })),
-      {
-        role: "user" as const,
+      }));
+
+    // Build alternating sequence starting with user
+    // After system, first message MUST be user, then alternate
+    let expectedRole: "user" | "assistant" = "user";
+    
+    for (const msg of validHistory) {
+      // Skip if role doesn't match expected alternation
+      if (msg.role !== expectedRole) {
+        // If we expected user but got assistant, skip it (we'll add user next)
+        // If we expected assistant but got user, we can use it but need to adjust
+        if (expectedRole === "assistant" && msg.role === "user") {
+          // This breaks alternation - skip this message
+          continue;
+        }
+        // If we expected user but got assistant, skip and keep expecting user
+        continue;
+      }
+      
+      // Add message and switch expected role
+      messages.push(msg);
+      expectedRole = expectedRole === "user" ? "assistant" : "user";
+    }
+
+    // Ensure we end with user message (the current one)
+    // If last message in history was assistant, we can add user
+    // If last message was user, we'll replace it with current user message
+    if (messages.length > 1) {
+      const lastMessage = messages[messages.length - 1];
+      if (lastMessage.role === "user") {
+        // Replace last user message with current one
+        messages[messages.length - 1] = {
+          role: "user",
+          content: userMessage,
+        };
+      } else {
+        // Last was assistant, add current user message
+        messages.push({
+          role: "user",
+          content: userMessage,
+        });
+      }
+    } else {
+      // Only system message, add user message
+      messages.push({
+        role: "user",
         content: userMessage,
-      },
-    ];
+      });
+    }
+
+    // Debug: log message structure
+    const roles = messages.map(m => m.role);
+    console.log("Final message roles:", roles.join(" -> "));
+
+    return messages;
   }
+
+  // Valid Perplexity API models (as of 2024)
+  private readonly VALID_PERPLEXITY_MODELS = [
+    "sonar-pro", // Recommended for Pro accounts - verified working
+    "sonar",
+    "sonar-reasoning",
+    "llama-3.1-sonar-large-128k-online",
+    "llama-3.1-sonar-huge-128k-online",
+    "llama-3.1-sonar-small-128k-online",
+    "sonar-small-online",
+    "sonar-medium-online",
+    "sonar-large-online",
+    "llama-3.1-sonar-large-32k-online",
+    "llama-3.1-sonar-small-32k-online"
+  ];
 
   private async getPerplexityResponse(messages: Array<{ role: string; content: string }>): Promise<string> {
     if (!env.perplexityApiKey) {
@@ -77,11 +148,49 @@ export class ChatbotService {
     // Perplexity API endpoint
     const url = "https://api.perplexity.ai/chat/completions";
 
-    // Convert messages to Perplexity format (they use OpenAI-compatible format)
+    // Messages are already properly formatted by buildMessages
+    // Just convert to the format Perplexity expects
     const perplexityMessages = messages.map(msg => ({
-      role: msg.role === "system" ? "system" : msg.role,
+      role: msg.role,
       content: msg.content,
-    }));
+    })) as Array<{ role: "system" | "user" | "assistant"; content: string }>;
+    
+    // Debug logging - show message structure
+    const roles = perplexityMessages.map(m => m.role);
+    console.log("Sending to Perplexity - Message roles:", roles.join(" -> "));
+    
+    // Final validation before sending
+    const rolesAfterSystem = roles.filter(r => r !== "system");
+    if (rolesAfterSystem.length === 0) {
+      throw new Error("No messages after system message");
+    }
+    
+    // Ensure first message after system is user
+    if (rolesAfterSystem[0] !== "user") {
+      console.error(`ERROR: First message after system is '${rolesAfterSystem[0]}', must be 'user'`);
+      throw new Error(`Invalid message format: first message after system must be 'user'`);
+    }
+    
+    // Ensure proper alternation
+    for (let i = 1; i < rolesAfterSystem.length; i++) {
+      if (rolesAfterSystem[i] === rolesAfterSystem[i - 1]) {
+        console.error(`ERROR: Found consecutive '${rolesAfterSystem[i]}' messages`);
+        throw new Error(`Invalid message alternation: consecutive '${rolesAfterSystem[i]}' messages`);
+      }
+    }
+
+    // Get model name and validate it's a valid Perplexity model
+    let modelName = (env.perplexityModel || "sonar-pro").trim();
+    
+    // Validate model name is in the list of valid models
+    if (!this.VALID_PERPLEXITY_MODELS.includes(modelName)) {
+      console.warn(`Invalid Perplexity model name: "${modelName}"`);
+      console.warn(`Valid models are: ${this.VALID_PERPLEXITY_MODELS.join(", ")}`);
+      console.warn(`Using default model: sonar-pro`);
+      modelName = "sonar-pro";
+    }
+    
+    console.log(`Using Perplexity model: ${modelName}`);
 
     const response = await fetch(url, {
       method: "POST",
@@ -90,16 +199,24 @@ export class ChatbotService {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: env.perplexityModel || "llama-3.1-sonar-large-128k-online",
+        model: modelName,
         messages: perplexityMessages,
-        temperature: 0.7,
-        max_tokens: 500,
+        temperature: 0.2, // Match working example
+        max_tokens: 512, // Match working example
       }),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`Perplexity API error: ${response.status} - ${errorText}`);
+      let errorMessage = `Perplexity API error: ${response.status} - ${errorText}`;
+      
+      // Provide helpful error message for invalid model
+      if (response.status === 400 && errorText.includes("Invalid model")) {
+        errorMessage += `\nValid Perplexity models: ${this.VALID_PERPLEXITY_MODELS.join(", ")}`;
+        errorMessage += `\nPlease update PERPLEXITY_MODEL in your .env file with a valid model name.`;
+      }
+      
+      throw new Error(errorMessage);
     }
 
     const data = await response.json();

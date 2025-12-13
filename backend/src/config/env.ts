@@ -13,6 +13,9 @@ export const env = {
   otelOtlpEndpoint: process.env.OTEL_EXPORTER_OTLP_ENDPOINT ||"",
   otelOtlpHeaders: process.env.OTEL_EXPORTER_OTLP_HEADERS || "",
   // Perplexity AI Configuration
-  perplexityApiKey: process.env.PERPLEXITY_API_KEY || "",
-  perplexityModel: process.env.PERPLEXITY_MODEL || "llama-3.1-sonar-large-128k-online"
+  // Valid models: sonar-pro (recommended for Pro accounts), sonar, sonar-reasoning,
+  // llama-3.1-sonar-large-128k-online, llama-3.1-sonar-huge-128k-online, 
+  // llama-3.1-sonar-small-128k-online, sonar-small-online, sonar-medium-online, sonar-large-online
+  perplexityApiKey: (process.env.PERPLEXITY_API_KEY || "").trim(),
+  perplexityModel: (process.env.PERPLEXITY_MODEL || "sonar-pro").trim()
 };
