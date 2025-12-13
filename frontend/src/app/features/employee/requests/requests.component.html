@@ -127,6 +127,21 @@
 
         <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
         <tr mat-row *matRowDef="let row; columns: displayedColumns;" (click)="selectRequest(row)" class="clickable-row"></tr>
+        
+        <!-- No data row -->
+        <tr class="mat-row" *matNoDataRow>
+          <td class="mat-cell" [attr.colspan]="displayedColumns.length">
+            <div class="no-requests-message">
+              <mat-icon>inbox</mat-icon>
+              <h3>No Travel Requests Yet</h3>
+              <p>You haven't created any travel requests. Click the "New Request" button to get started.</p>
+              <button mat-raised-button color="primary" (click)="openNewRequestDialog()">
+                <mat-icon>add</mat-icon>
+                Create Your First Request
+              </button>
+            </div>
+          </td>
+        </tr>
       </table>
     </div>
   </div>

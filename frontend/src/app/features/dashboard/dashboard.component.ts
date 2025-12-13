@@ -12,7 +12,7 @@ import { EmployeeService } from '../../core/services/employee.service';
 import { ManagerService } from '../../core/services/manager.service';
 import { TravelDeskService } from '../../core/services/travel-desk.service';
 import { AdminService } from '../../core/services/admin.service';
-import { UserRole, DashboardStats } from '../../shared/models';
+import { UserRole, DashboardStats, RequestStatus, TravelRequest } from '../../shared/models';
 
 @Component({
   selector: 'app-dashboard',
@@ -95,24 +95,60 @@ export class DashboardComponent implements OnInit {
   }
 
   loadManagerStats(): void {
-    // TODO: Implement manager stats endpoint
+    // Load pending requests
     this.managerService.getPendingRequests().subscribe({
-      next: (requests) => {
-        this.stats = {
-          pendingApprovals: requests.length,
-          totalUsers: 0 // TODO: Get from manager stats endpoint
-        };
-        this.isLoading = false;
+      next: (pendingRequests) => {
+        // Load all requests to calculate weekly approved count
+        this.managerService.getRequests().subscribe({
+          next: (allRequests) => {
+            const weeklyApprovedCount = this.calculateWeeklyApprovedCount(allRequests);
+            this.stats = {
+              pendingApprovals: pendingRequests.length,
+              totalUsers: 0, // TODO: Get from manager stats endpoint
+              weeklyApprovedCount: weeklyApprovedCount
+            };
+            this.isLoading = false;
+          },
+          error: (error) => {
+            console.error('Error loading all requests:', error);
+            this.stats = {
+              pendingApprovals: pendingRequests.length,
+              totalUsers: 0,
+              weeklyApprovedCount: 0
+            };
+            this.isLoading = false;
+          }
+        });
       },
       error: (error) => {
         console.error('Error loading manager dashboard stats:', error);
         this.stats = {
           pendingApprovals: 0,
-          totalUsers: 0
+          totalUsers: 0,
+          weeklyApprovedCount: 0
         };
         this.isLoading = false;
       }
     });
+  }
+
+  private calculateWeeklyApprovedCount(requests: TravelRequest[]): number {
+    const now = new Date();
+    const startOfWeek = new Date(now);
+    startOfWeek.setDate(now.getDate() - now.getDay()); // Start of week (Sunday)
+    startOfWeek.setHours(0, 0, 0, 0);
+
+    return requests.filter(request => {
+      if (request.status !== RequestStatus.APPROVED) {
+        return false;
+      }
+      // Check if request was approved this week
+      const updatedAt = request.updatedAt ? new Date(request.updatedAt) : null;
+      if (!updatedAt) {
+        return false;
+      }
+      return updatedAt >= startOfWeek;
+    }).length;
   }
 
   loadTravelDeskStats(): void {

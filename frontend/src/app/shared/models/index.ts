@@ -131,6 +131,7 @@ export interface DashboardStats {
   approvedAwaitingBooking?: number;
   tripsBookedToday?: number;
   totalCost?: number;
+  weeklyApprovedCount?: number;
 }
 
 // Itinerary data
