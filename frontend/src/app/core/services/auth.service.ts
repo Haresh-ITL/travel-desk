@@ -9,12 +9,12 @@ import { LoginRequest, LoginResponse, UserRole } from '../../shared/models';
   providedIn: 'root'
 })
 export class AuthService {
-  private currentUserSubject = new BehaviorSubject<LoginResponse | null>(this.getUserFromStorage());
+  private readonly currentUserSubject = new BehaviorSubject<LoginResponse | null>(this.getUserFromStorage());
   public currentUser$ = this.currentUserSubject.asObservable();
 
   constructor(
-    private http: HttpClient,
-    private router: Router
+    private readonly http: HttpClient,
+    private readonly router: Router
   ) {}
 
   private getUserFromStorage(): LoginResponse | null {

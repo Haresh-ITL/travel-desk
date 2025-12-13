@@ -45,15 +45,6 @@ import { AuthService } from '../../core/services/auth.service';
       state('default', style({ transform: 'scale(1)' })),
       state('pulse', style({ transform: 'scale(1.05)' })),
       transition('default <=> pulse', animate('300ms ease-in-out'))
-    ]),
-    trigger('iconFloat', [
-      transition(':enter', [
-        animate('2s ease-in-out infinite', keyframes([
-          style({ transform: 'translateY(0px)', offset: 0 }),
-          style({ transform: 'translateY(-10px)', offset: 0.5 }),
-          style({ transform: 'translateY(0px)', offset: 1 })
-        ]))
-      ])
     ])
   ]
 })

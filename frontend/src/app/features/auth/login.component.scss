@@ -218,6 +218,16 @@
     position: relative;
     display: inline-block;
     margin-bottom: 20px;
+    animation: iconFloat 2s ease-in-out infinite;
+  }
+
+  @keyframes iconFloat {
+    0%, 100% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
   }
 
   .login-icon {

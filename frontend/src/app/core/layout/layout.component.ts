@@ -1,6 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule, Router } from '@angular/router';
+import { RouterModule, Router, NavigationEnd } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatSidenavModule } from '@angular/material/sidenav';
@@ -12,6 +12,7 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatSlideToggleModule, MatSlideToggleChange } from '@angular/material/slide-toggle';
 import { UserRole } from '../../shared/models';
 import { AuthService } from '../services/auth.service';
+import { filter, Subscription } from 'rxjs';
 
 interface MenuItem {
   label: string;
@@ -39,11 +40,13 @@ interface MenuItem {
   templateUrl: './layout.component.html',
   styleUrls: ['./layout.component.scss']
 })
-export class LayoutComponent implements OnInit {
+export class LayoutComponent implements OnInit, OnDestroy {
   userName: string = '';
   userRole: UserRole | null = null;
   isDarkTheme = false;
   menuItems: MenuItem[] = [];
+  currentPageTitle: string = 'Dashboard';
+  private routerSubscription?: Subscription;
 
   private allMenuItems: MenuItem[] = [
     { label: 'Dashboard', icon: 'dashboard', route: '/dashboard', roles: [UserRole.ORG_ADMIN, UserRole.EMPLOYEE, UserRole.MANAGER, UserRole.TRAVEL_DESK_ADMIN] },
@@ -78,6 +81,29 @@ export class LayoutComponent implements OnInit {
     const savedTheme = localStorage.getItem('theme');
     this.isDarkTheme = savedTheme === 'dark';
     this.applyTheme();
+
+    // Track route changes to update page title
+    this.updatePageTitle(this.router.url);
+    this.routerSubscription = this.router.events
+      .pipe(filter(event => event instanceof NavigationEnd))
+      .subscribe((event: any) => {
+        this.updatePageTitle(event.url);
+      });
+  }
+
+  ngOnDestroy(): void {
+    if (this.routerSubscription) {
+      this.routerSubscription.unsubscribe();
+    }
+  }
+
+  private updatePageTitle(url: string): void {
+    const currentItem = this.allMenuItems.find(item => url.startsWith(item.route));
+    if (currentItem) {
+      this.currentPageTitle = currentItem.label;
+    } else {
+      this.currentPageTitle = 'Dashboard';
+    }
   }
 
   filterMenuItems(): void {
