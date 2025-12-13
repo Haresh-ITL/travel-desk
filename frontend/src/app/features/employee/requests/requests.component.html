@@ -61,18 +61,6 @@
       <input matInput [(ngModel)]="searchText" (ngModelChange)="applyFilter()" placeholder="Destination or status">
       <mat-icon matPrefix>search</mat-icon>
     </mat-form-field>
-    
-    <mat-form-field appearance="outline" class="status-filter-field">
-      <mat-label>Filter by Status</mat-label>
-      <mat-select [(ngModel)]="selectedStatus" (ngModelChange)="filterByStatus($event)">
-        <mat-option value="ALL">All Statuses</mat-option>
-        <mat-option [value]="RequestStatus.PENDING">Pending</mat-option>
-        <mat-option [value]="RequestStatus.APPROVED">Approved</mat-option>
-        <mat-option [value]="RequestStatus.BOOKED">Booked</mat-option>
-        <mat-option [value]="RequestStatus.REJECTED">Rejected</mat-option>
-      </mat-select>
-      <mat-icon matPrefix>filter_list</mat-icon>
-    </mat-form-field>
   </div>
 
   <div class="table-wrapper">

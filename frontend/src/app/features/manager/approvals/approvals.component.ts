@@ -1,6 +1,7 @@
 import { Component, OnInit, AfterViewInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { MatTableModule, MatTableDataSource } from '@angular/material/table';
 import { MatSortModule, MatSort } from '@angular/material/sort';
 import { MatButtonModule } from '@angular/material/button';
@@ -11,11 +12,9 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { ManagerService } from '../../../core/services/manager.service';
 import { TravelRequest, RequestStatus, ManagerDecision, TransportMode } from '../../../shared/models';
-import { TravelRequestDialogComponent } from '../../employee/requests/travel-request-dialog.component';
 
 @Component({
   selector: 'app-approvals',
@@ -23,6 +22,7 @@ import { TravelRequestDialogComponent } from '../../employee/requests/travel-req
   imports: [
     CommonModule,
     FormsModule,
+    RouterModule,
     MatTableModule,
     MatSortModule,
     MatButtonModule,
@@ -33,7 +33,6 @@ import { TravelRequestDialogComponent } from '../../employee/requests/travel-req
     MatSelectModule,
     MatSidenavModule,
     MatSnackBarModule,
-    MatDialogModule,
     MatTooltipModule
   ],
   templateUrl: './approvals.component.html',
@@ -64,11 +63,18 @@ export class ApprovalsComponent implements OnInit, AfterViewInit {
   constructor(
     private managerService: ManagerService,
     private snackBar: MatSnackBar,
-    private dialog: MatDialog
+    private route: ActivatedRoute,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
-    this.loadRequests();
+    // Check for filter query parameter
+    this.route.queryParams.subscribe(params => {
+      if (params['filter'] === 'pending') {
+        this.selectedStatus = RequestStatus.PENDING;
+      }
+      this.loadRequests();
+    });
   }
 
   ngAfterViewInit(): void {
@@ -138,6 +144,19 @@ export class ApprovalsComponent implements OnInit, AfterViewInit {
 
   filterByStatus(status: RequestStatus | 'ALL'): void {
     this.selectedStatus = status;
+    // Update URL query params
+    const queryParams: any = {};
+    if (status === RequestStatus.PENDING) {
+      queryParams.filter = 'pending';
+    } else if (status !== 'ALL') {
+      queryParams.filter = status.toLowerCase();
+    }
+    // Remove filter param if ALL is selected
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: status === 'ALL' ? {} : queryParams,
+      queryParamsHandling: 'merge'
+    });
     this.applyFilters();
   }
 
@@ -229,20 +248,5 @@ export class ApprovalsComponent implements OnInit, AfterViewInit {
 
   formatDate(date: Date): string {
     return new Date(date).toLocaleDateString();
-  }
-
-  openNewRequestDialog(): void {
-    const dialogRef = this.dialog.open(TravelRequestDialogComponent, {
-      width: '1100px',
-      maxWidth: '95vw',
-      disableClose: false
-    });
-
-    dialogRef.afterClosed().subscribe(result => {
-      if (result) {
-        this.snackBar.open('Travel request created and auto-approved successfully', 'Close', { duration: 3000 });
-        this.loadRequests();
-      }
-    });
   }
 }

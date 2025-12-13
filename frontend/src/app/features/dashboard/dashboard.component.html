@@ -153,7 +153,7 @@
     <mat-card class="wide-card">
       <h3><mat-icon>assignment</mat-icon> Quick Actions</h3>
       <div class="action-buttons">
-        <button mat-raised-button color="warn" routerLink="/manager/approvals">
+        <button mat-raised-button color="warn" [routerLink]="['/manager/approvals']" [queryParams]="{filter: 'pending'}">
           <mat-icon>approval</mat-icon>
           Review Pending ({{ stats.pendingApprovals }})
         </button>

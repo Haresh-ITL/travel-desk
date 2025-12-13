@@ -45,6 +45,18 @@ export const routes: Routes = [
         data: { role: UserRole.MANAGER }
       },
       {
+        path: 'manager/requests',
+        loadComponent: () => import('./features/manager/requests/requests.component').then(m => m.ManagerRequestsComponent),
+        canActivate: [roleGuard],
+        data: { role: UserRole.MANAGER }
+      },
+      {
+        path: 'manager/profile',
+        loadComponent: () => import('./features/manager/profile/profile.component').then(m => m.ManagerProfileComponent),
+        canActivate: [roleGuard],
+        data: { role: UserRole.MANAGER }
+      },
+      {
         path: 'travel-desk/bookings',
         loadComponent: () => import('./features/travel-desk/bookings/bookings.component').then(m => m.BookingsComponent),
         canActivate: [roleGuard],

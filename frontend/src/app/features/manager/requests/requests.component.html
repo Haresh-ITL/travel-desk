@@ -1,6 +1,10 @@
-<div class="approvals-container">
-  <div class="approvals-header">
-    <h1>Employee Requests</h1>
+<div class="requests-container">
+  <div class="requests-header">
+    <h1>My Travel Requests</h1>
+    <button mat-raised-button class="new-request-button" (click)="openNewRequestDialog()">
+      <mat-icon>add</mat-icon>
+      New Request
+    </button>
   </div>
 
   <div class="status-cards">
@@ -22,15 +26,6 @@
         <div class="status-label">Pending</div>
       </div>
     </div>
-    <div class="status-card" (click)="filterByStatus(RequestStatus.APPROVED)">
-      <div class="status-icon approved">
-        <mat-icon>check_circle</mat-icon>
-      </div>
-      <div class="status-info">
-        <div class="status-count">{{ statusCounts.APPROVED }}</div>
-        <div class="status-label">Approved</div>
-      </div>
-    </div>
     <div class="status-card" (click)="filterByStatus(RequestStatus.BOOKED)">
       <div class="status-icon booked">
         <mat-icon>confirmation_number</mat-icon>
@@ -40,33 +35,19 @@
         <div class="status-label">Booked</div>
       </div>
     </div>
-    <div class="status-card" (click)="filterByStatus(RequestStatus.REJECTED)">
-      <div class="status-icon rejected">
-        <mat-icon>cancel</mat-icon>
-      </div>
-      <div class="status-info">
-        <div class="status-count">{{ statusCounts.REJECTED }}</div>
-        <div class="status-label">Rejected</div>
-      </div>
-    </div>
   </div>
 
-  <div class="approvals-toolbar">
+  <div class="requests-toolbar">
     <mat-form-field appearance="outline" class="search-field">
       <mat-label>Search requests</mat-label>
-      <input matInput [(ngModel)]="searchText" (ngModelChange)="applyFilter()" placeholder="Employee, destination or status">
+      <input matInput [(ngModel)]="searchText" (ngModelChange)="applyFilter()" placeholder="Destination or status">
       <mat-icon matPrefix>search</mat-icon>
     </mat-form-field>
   </div>
 
   <div class="table-wrapper">
     <div class="table-container">
-      <table mat-table [dataSource]="dataSource" matSort class="approvals-table">
-        <ng-container matColumnDef="employeeName">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header="employeeName">Employee</th>
-          <td mat-cell *matCellDef="let request">{{ request.employeeName }}</td>
-        </ng-container>
-
+      <table mat-table [dataSource]="dataSource" matSort class="requests-table">
         <ng-container matColumnDef="from">
           <th mat-header-cell *matHeaderCellDef mat-sort-header="from">From</th>
           <td mat-cell *matCellDef="let request">{{ request.from }}</td>
@@ -119,6 +100,10 @@
             <button mat-icon-button (click)="selectRequest(request); $event.stopPropagation()" matTooltip="View Details">
               <mat-icon>visibility</mat-icon>
             </button>
+            <button mat-icon-button (click)="viewItinerary(request); $event.stopPropagation()" 
+                    *ngIf="request.status === RequestStatus.BOOKED" matTooltip="View Itinerary">
+              <mat-icon>confirmation_number</mat-icon>
+            </button>
           </td>
         </ng-container>
 
@@ -133,16 +118,12 @@
     <div class="drawer-panel" (click)="$event.stopPropagation()">
       <div class="drawer-content">
         <div class="drawer-header">
-          <h2>Review Request</h2>
+          <h2>Request Details</h2>
           <button mat-icon-button (click)="closeDrawer()">
             <mat-icon>close</mat-icon>
           </button>
         </div>
         <div class="drawer-body">
-          <div class="detail-item">
-            <span class="label">Employee:</span>
-            <span class="value">{{ selectedRequest.employeeName }}</span>
-          </div>
           <div class="detail-item">
             <span class="label">From:</span>
             <span class="value">{{ selectedRequest.from }}</span>
@@ -172,7 +153,7 @@
             <span class="value">{{ selectedRequest.purpose }}</span>
           </div>
           <div class="detail-item" *ngIf="selectedRequest.managerComment">
-            <span class="label">Manager Comment:</span>
+            <span class="label">Comment:</span>
             <span class="value">{{ selectedRequest.managerComment }}</span>
           </div>
           <div class="detail-item">
@@ -183,23 +164,15 @@
               </mat-chip>
             </span>
           </div>
-          
-          <mat-form-field appearance="outline" class="full-width" *ngIf="selectedRequest.status === RequestStatus.PENDING">
-            <mat-label>Comment</mat-label>
-            <textarea matInput [(ngModel)]="comment" rows="4" placeholder="Add your comment"></textarea>
-          </mat-form-field>
         </div>
-        <div class="drawer-actions" *ngIf="selectedRequest.status === RequestStatus.PENDING">
-          <button mat-raised-button color="accent" (click)="approve()" class="full-width">
-            <mat-icon>check_circle</mat-icon>
-            Approve
-          </button>
-          <button mat-raised-button color="warn" (click)="reject()" class="full-width">
-            <mat-icon>cancel</mat-icon>
-            Reject
+        <div class="drawer-actions" *ngIf="selectedRequest.status === RequestStatus.BOOKED">
+          <button mat-raised-button color="primary" (click)="viewItinerary(selectedRequest)">
+            <mat-icon>confirmation_number</mat-icon>
+            View Itinerary
           </button>
         </div>
       </div>
     </div>
   </div>
 </div>
+

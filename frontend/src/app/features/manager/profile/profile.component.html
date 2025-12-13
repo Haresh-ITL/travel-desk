@@ -1,0 +1,207 @@
+<div class="profile-container">
+  <!-- Hero Header Section -->
+  <div class="hero-section">
+    <div class="hero-background"></div>
+    <div class="hero-content">
+      <div class="avatar-container">
+        <div class="avatar-circle">
+          <mat-icon class="avatar-icon">account_circle</mat-icon>
+          <div class="avatar-badge">
+            <mat-icon>verified</mat-icon>
+          </div>
+        </div>
+      </div>
+      <div class="hero-info">
+        <h1 class="hero-name">{{ userName }}</h1>
+        <p class="hero-subtitle">{{ roleDisplay }}</p>
+        <div class="hero-meta">
+          <div class="meta-badge">
+            <mat-icon>email</mat-icon>
+            <span>{{ userEmail }}</span>
+          </div>
+          <div class="meta-badge">
+            <mat-icon>verified_user</mat-icon>
+            <span>Active Account</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Profile Details Card -->
+  <mat-card class="profile-details-card">
+    <mat-card-header class="card-header">
+      <div class="header-content">
+        <mat-icon class="header-icon">person</mat-icon>
+        <h2 class="card-title">Profile Information</h2>
+      </div>
+    </mat-card-header>
+    
+    <mat-card-content>
+      <div class="details-grid">
+        <div class="detail-card">
+          <div class="detail-icon-wrapper">
+            <mat-icon class="detail-icon">person_outline</mat-icon>
+          </div>
+          <div class="detail-info">
+            <span class="detail-label">Full Name</span>
+            <span class="detail-value">{{ userName }}</span>
+          </div>
+        </div>
+
+        <div class="detail-card">
+          <div class="detail-icon-wrapper">
+            <mat-icon class="detail-icon">email</mat-icon>
+          </div>
+          <div class="detail-info">
+            <span class="detail-label">Email Address</span>
+            <span class="detail-value">{{ userEmail }}</span>
+          </div>
+        </div>
+
+        <div class="detail-card">
+          <div class="detail-icon-wrapper">
+            <mat-icon class="detail-icon">badge</mat-icon>
+          </div>
+          <div class="detail-info">
+            <span class="detail-label">Role</span>
+            <span class="detail-value">{{ roleDisplay }}</span>
+          </div>
+        </div>
+
+        <div class="detail-card">
+          <div class="detail-icon-wrapper">
+            <mat-icon class="detail-icon">security</mat-icon>
+          </div>
+          <div class="detail-info">
+            <span class="detail-label">Account Status</span>
+            <span class="detail-value status-active">
+              <mat-icon class="status-icon">check_circle</mat-icon>
+              Active
+            </span>
+          </div>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Documents Section -->
+  <mat-card class="documents-card">
+    <mat-card-header class="card-header">
+      <div class="header-content">
+        <mat-icon class="header-icon">folder_special</mat-icon>
+        <h2 class="card-title">Documents & Verification</h2>
+      </div>
+      <div class="header-actions">
+        <button 
+          mat-icon-button 
+          (click)="loadDocuments()" 
+          [disabled]="isLoadingDocuments"
+          matTooltip="Refresh documents from database"
+          class="refresh-button">
+          <mat-icon>refresh</mat-icon>
+        </button>
+        <div class="header-badge">
+          <span>{{ uploadedDocumentsCount }}/{{ documents.length }}</span>
+          <span class="badge-label">Uploaded</span>
+        </div>
+      </div>
+    </mat-card-header>
+    
+    <mat-card-content>
+      <div class="documents-grid" *ngIf="!isLoadingDocuments; else loadingTemplate">
+        <div class="document-card" 
+             *ngFor="let doc of documents"
+             [class.uploaded]="doc.uploaded"
+             [class.pending]="!doc.uploaded">
+          <div class="document-header">
+            <div class="document-icon-container">
+              <div class="document-icon-wrapper" [class]="doc.iconClass">
+                <mat-icon>{{ doc.icon }}</mat-icon>
+              </div>
+              <div class="upload-status-badge" *ngIf="doc.uploaded">
+                <mat-icon>check_circle</mat-icon>
+              </div>
+            </div>
+            <h3 class="document-name">{{ doc.name }}</h3>
+            <p class="document-status">
+              <mat-icon class="status-indicator">{{ doc.uploaded ? 'check_circle' : 'pending' }}</mat-icon>
+              <span>{{ doc.uploaded ? 'Verified' : 'Pending Upload' }}</span>
+            </p>
+            <!-- Document Preview for Images -->
+            <div class="document-preview" *ngIf="doc.uploaded && doc.data && doc.mimeType?.startsWith('image/')">
+              <img [src]="doc.data" [alt]="doc.name" class="preview-image" />
+            </div>
+          </div>
+
+          <div class="document-actions">
+            <button 
+              *ngIf="!doc.uploaded"
+              mat-raised-button 
+              color="primary" 
+              (click)="uploadDocument(doc.type)"
+              [disabled]="isLoading"
+              class="action-button upload-button">
+              <mat-icon>cloud_upload</mat-icon>
+              <span>Upload Document</span>
+            </button>
+            <div *ngIf="doc.uploaded" class="uploaded-actions">
+              <button 
+                mat-raised-button 
+                color="accent"
+                (click)="viewDocument(doc)"
+                class="action-button view-button">
+                <mat-icon>visibility</mat-icon>
+                <span>View</span>
+              </button>
+              <button 
+                mat-stroked-button 
+                color="primary"
+                (click)="downloadDocument(doc)"
+                class="action-button download-button">
+                <mat-icon>download</mat-icon>
+                <span>Download</span>
+              </button>
+              <button 
+                mat-stroked-button 
+                color="primary"
+                (click)="uploadDocument(doc.type)"
+                [disabled]="isLoading"
+                class="action-button replace-button">
+                <mat-icon>refresh</mat-icon>
+                <span>Replace</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="document-footer" *ngIf="doc.uploaded">
+            <div class="footer-info">
+              <mat-icon class="footer-icon">lock</mat-icon>
+            </div>
+            <div class="footer-details" *ngIf="doc.fileName || doc.mimeType">
+              <span class="detail-item" *ngIf="doc.fileName">
+                <mat-icon class="detail-icon-small">description</mat-icon>
+                {{ doc.fileName }}
+              </span>
+              <span class="detail-item" *ngIf="doc.mimeType">
+                <mat-icon class="detail-icon-small">info</mat-icon>
+                {{ doc.mimeType }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Loading Template -->
+      <ng-template #loadingTemplate>
+        <div class="loading-container">
+          <div class="loading-spinner">
+            <mat-icon class="spinner-icon">hourglass_empty</mat-icon>
+          </div>
+          <p class="loading-text">Loading your documents...</p>
+        </div>
+      </ng-template>
+    </mat-card-content>
+  </mat-card>
+</div>
+

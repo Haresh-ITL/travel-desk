@@ -53,6 +53,8 @@ export class LayoutComponent implements OnInit, OnDestroy {
     { label: 'Requests', icon: 'flight_takeoff', route: '/employee/requests', roles: [UserRole.EMPLOYEE] },
     { label: 'Profile', icon: 'person', route: '/employee/profile', roles: [UserRole.EMPLOYEE] },
     { label: 'Approvals', icon: 'approval', route: '/manager/approvals', roles: [UserRole.MANAGER] },
+    { label: 'Requests', icon: 'flight_takeoff', route: '/manager/requests', roles: [UserRole.MANAGER] },
+    { label: 'Profile', icon: 'person', route: '/manager/profile', roles: [UserRole.MANAGER] },
     { label: 'Bookings', icon: 'book_online', route: '/travel-desk/bookings', roles: [UserRole.TRAVEL_DESK_ADMIN] }
   ];
 
