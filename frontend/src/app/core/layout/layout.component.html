@@ -21,8 +21,8 @@
       
       <div class="toolbar-actions">
         <mat-slide-toggle 
-          [(ngModel)]="isDarkTheme" 
-          (change)="toggleTheme()"
+          [checked]="isDarkTheme" 
+          (change)="toggleTheme($event)"
           class="theme-toggle">
           <mat-icon>{{ isDarkTheme ? 'dark_mode' : 'light_mode' }}</mat-icon>
         </mat-slide-toggle>

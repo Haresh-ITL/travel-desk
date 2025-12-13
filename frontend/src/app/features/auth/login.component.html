@@ -1,17 +1,29 @@
 <div class="login-container">
-  <div class="login-card-wrapper">
+  <div class="animated-background">
+    <div class="gradient-orb orb-1"></div>
+    <div class="gradient-orb orb-2"></div>
+    <div class="gradient-orb orb-3"></div>
+    <div class="floating-particles">
+      <div class="particle" *ngFor="let i of [1,2,3,4,5,6,7,8]"></div>
+    </div>
+  </div>
+  
+  <div class="login-card-wrapper" @fadeInUp>
     <mat-card class="login-card">
       <mat-card-header>
         <div class="login-header">
-          <mat-icon class="login-icon">flight</mat-icon>
-          <h1>Corporate Travel Desk</h1>
+          <div class="icon-wrapper" @iconFloat>
+            <mat-icon class="login-icon">flight</mat-icon>
+            <div class="icon-glow"></div>
+          </div>
+          <h1>ITL travel desk</h1>
           <p>Sign in to manage your travel</p>
         </div>
       </mat-card-header>
 
       <mat-card-content>
         <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
-          <mat-form-field appearance="outline" class="full-width">
+          <mat-form-field appearance="outline" class="full-width animated-field" @slideIn>
             <mat-label>Email</mat-label>
             <input matInput type="email" formControlName="email" placeholder="Enter your email">
             <mat-icon matPrefix>email</mat-icon>
@@ -23,11 +35,11 @@
             </mat-error>
           </mat-form-field>
 
-          <mat-form-field appearance="outline" class="full-width">
+          <mat-form-field appearance="outline" class="full-width animated-field" @slideIn>
             <mat-label>Password</mat-label>
             <input matInput [type]="hidePassword ? 'password' : 'text'" formControlName="password" placeholder="Enter your password">
             <mat-icon matPrefix>lock</mat-icon>
-            <button mat-icon-button matSuffix type="button" (click)="hidePassword = !hidePassword">
+            <button mat-icon-button matSuffix type="button" (click)="hidePassword = !hidePassword" class="password-toggle">
               <mat-icon>{{ hidePassword ? 'visibility_off' : 'visibility' }}</mat-icon>
             </button>
             <mat-error *ngIf="loginForm.get('password')?.hasError('required')">
@@ -35,9 +47,18 @@
             </mat-error>
           </mat-form-field>
 
-          <button mat-raised-button color="primary" type="submit" class="login-button full-width" [disabled]="loading || loginForm.invalid">
+          <button 
+            mat-raised-button 
+            color="primary" 
+            type="submit" 
+            class="login-button full-width" 
+            [disabled]="loading || loginForm.invalid"
+            [@pulse]="loginForm.valid && !loading ? 'pulse' : 'default'">
             <mat-spinner *ngIf="loading" diameter="20" class="button-spinner"></mat-spinner>
-            <span *ngIf="!loading">Sign In</span>
+            <span *ngIf="!loading" class="button-text">
+              <mat-icon>login</mat-icon>
+              Sign In
+            </span>
           </button>
         </form>
       </mat-card-content>

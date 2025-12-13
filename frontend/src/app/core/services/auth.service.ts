@@ -33,10 +33,26 @@ export class AuthService {
     const loginRequest: LoginRequest = { email, password };
     return this.http.post<LoginResponse>(`${environment.apiUrl}/auth/login`, loginRequest).pipe(
       tap(response => {
-        localStorage.setItem('userUuid', response.userUuid);
-        localStorage.setItem('roleName', response.roleName);
-        localStorage.setItem('name', response.name);
-        localStorage.setItem('email', response.email);
+        // Handle both 'uuid' and 'userUuid' field names for backward compatibility
+        const userUuid = response.userUuid || (response as any).uuid;
+        const roleName = response.roleName || (response as any).roleName;
+        const name = response.name || (response as any).name || '';
+        const email = response.email || (response as any).email || '';
+        
+        // Safety check: only store if values are defined and not null
+        if (userUuid) {
+          localStorage.setItem('userUuid', userUuid);
+        }
+        if (roleName) {
+          localStorage.setItem('roleName', roleName);
+        }
+        if (name && name !== 'undefined') {
+          localStorage.setItem('name', name);
+        }
+        if (email && email !== 'undefined') {
+          localStorage.setItem('email', email);
+        }
+        
         this.currentUserSubject.next(response);
       })
     );
@@ -64,7 +80,13 @@ export class AuthService {
   }
 
   getUserName(): string | null {
-    return localStorage.getItem('name');
+    const name = localStorage.getItem('name');
+    // Clean up if "undefined" string was stored
+    if (name === 'undefined' || name === 'null' || !name) {
+      localStorage.removeItem('name');
+      return null;
+    }
+    return name;
   }
 
   getUserEmail(): string | null {

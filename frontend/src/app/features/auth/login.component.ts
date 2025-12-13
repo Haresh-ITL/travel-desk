@@ -9,6 +9,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { trigger, state, style, transition, animate, keyframes } from '@angular/animations';
 import { AuthService } from '../../core/services/auth.service';
 
 @Component({
@@ -26,7 +27,35 @@ import { AuthService } from '../../core/services/auth.service';
     MatSnackBarModule
   ],
   templateUrl: './login.component.html',
-  styleUrls: ['./login.component.scss']
+  styleUrls: ['./login.component.scss'],
+  animations: [
+    trigger('fadeInUp', [
+      transition(':enter', [
+        style({ opacity: 0, transform: 'translateY(30px)' }),
+        animate('600ms cubic-bezier(0.35, 0, 0.25, 1)', style({ opacity: 1, transform: 'translateY(0)' }))
+      ])
+    ]),
+    trigger('slideIn', [
+      transition(':enter', [
+        style({ opacity: 0, transform: 'translateX(-20px)' }),
+        animate('400ms ease-out', style({ opacity: 1, transform: 'translateX(0)' }))
+      ])
+    ]),
+    trigger('pulse', [
+      state('default', style({ transform: 'scale(1)' })),
+      state('pulse', style({ transform: 'scale(1.05)' })),
+      transition('default <=> pulse', animate('300ms ease-in-out'))
+    ]),
+    trigger('iconFloat', [
+      transition(':enter', [
+        animate('2s ease-in-out infinite', keyframes([
+          style({ transform: 'translateY(0px)', offset: 0 }),
+          style({ transform: 'translateY(-10px)', offset: 0.5 }),
+          style({ transform: 'translateY(0px)', offset: 1 })
+        ]))
+      ])
+    ])
+  ]
 })
 export class LoginComponent {
   loginForm: FormGroup;

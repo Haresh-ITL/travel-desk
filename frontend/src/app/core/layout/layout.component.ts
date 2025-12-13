@@ -9,7 +9,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatChipsModule } from '@angular/material/chips';
-import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatSlideToggleModule, MatSlideToggleChange } from '@angular/material/slide-toggle';
 import { UserRole } from '../../shared/models';
 import { AuthService } from '../services/auth.service';
 
@@ -60,6 +60,16 @@ export class LayoutComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    // Clean up any "undefined" strings in localStorage
+    const storedName = localStorage.getItem('name');
+    if (storedName === 'undefined' || storedName === 'null') {
+      localStorage.removeItem('name');
+    }
+    const storedEmail = localStorage.getItem('email');
+    if (storedEmail === 'undefined' || storedEmail === 'null') {
+      localStorage.removeItem('email');
+    }
+    
     this.userName = this.authService.getUserName() || 'User';
     this.userRole = this.authService.getRole();
     this.filterMenuItems();
@@ -76,8 +86,8 @@ export class LayoutComponent implements OnInit {
     }
   }
 
-  toggleTheme(): void {
-    this.isDarkTheme = !this.isDarkTheme;
+  toggleTheme(event: MatSlideToggleChange): void {
+    this.isDarkTheme = event.checked;
     localStorage.setItem('theme', this.isDarkTheme ? 'dark' : 'light');
     this.applyTheme();
   }

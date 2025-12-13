@@ -34,6 +34,7 @@ authRouter.post("/login", async (req, res) => {
   logger.info("Login request received", {
    body: req.body
   });
+  
   const { email, password } = req.body;
   const user = await User.findOne({ email });
   if (!user) return res.status(400).json({ message: "Invalid credentials" });
@@ -43,5 +44,11 @@ authRouter.post("/login", async (req, res) => {
 
   const role = await Role.findOne({ uuid: user.roleId });
 
-  res.json({ uuid: user.uuid, roleId: user.roleId, roleName:role?.name });
+  res.json({ 
+    userUuid: user.uuid, 
+    roleId: user.roleId, 
+    roleName: role?.name,
+    name: user.name || '',
+    email: user.email || ''
+  });
 });
