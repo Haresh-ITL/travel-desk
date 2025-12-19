@@ -1,95 +1,115 @@
 .sidenav-container {
   height: 100vh;
+  background: var(--bg-primary);
 }
 
 .sidenav {
   width: 260px;
-  background: linear-gradient(180deg, #1e40af 0%, #2563eb 50%, #3b82f6 100%);
-  color: white;
+  background: var(--bg-blue-section);
+  background-image: 
+    linear-gradient(180deg, var(--primary-dark-blue) 0%, var(--secondary-blue) 100%);
+  color: var(--text-on-blue);
   padding: 0;
   overflow-x: hidden;
   overflow-y: auto;
-  box-shadow: 2px 0 8px rgba(30, 64, 175, 0.2);
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.08);
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
 
-  // Hide scrollbar but keep scrolling functionality
-  scrollbar-width: none; // Firefox
-  -ms-overflow-style: none; // IE and Edge
+  // Custom scrollbar for sidebar
+  scrollbar-width: thin;
+  scrollbar-color: var(--secondary-blue) var(--primary-navy);
 
   &::-webkit-scrollbar {
-    display: none; // Chrome, Safari, Opera
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: var(--primary-navy);
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--secondary-blue);
+    border-radius: 3px;
+    
+    &:hover {
+      background: var(--accent-blue);
+    }
   }
 
   .sidenav-header {
-    padding: 24px 16px;
+    padding: var(--spacing-lg) var(--spacing-md);
     display: flex;
     align-items: center;
-    gap: 12px;
-    background: rgba(0, 0, 0, 0.15);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+    gap: var(--spacing-md);
+    background: rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 
     .logo-icon {
       font-size: 32px;
       width: 32px;
       height: 32px;
-      color: #ffffff;
-      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+      color: var(--text-on-blue);
     }
 
     h2 {
       margin: 0;
       font-size: 20px;
       font-weight: 600;
-      color: #ffffff;
-      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+      color: var(--text-on-blue);
+      letter-spacing: -0.3px;
     }
   }
 
   mat-nav-list {
-    padding-top: 16px;
+    padding-top: var(--spacing-md);
     overflow-x: hidden;
 
     a {
-      color: #ffffff !important;
-      margin: 4px 12px;
-      border-radius: 8px;
-      transition: all 0.3s ease;
+      color: rgba(255, 255, 255, 0.8) !important;
+      margin: var(--spacing-xs) var(--spacing-md);
+      border-radius: var(--radius-md);
+      transition: all var(--transition-base);
+      border-left: 3px solid transparent;
+      position: relative;
 
       span {
-        color: #ffffff !important;
+        color: rgba(255, 255, 255, 0.8) !important;
+      }
+
+      mat-icon {
+        color: rgba(255, 255, 255, 0.7) !important;
+        transition: all var(--transition-base);
       }
 
       &:hover {
-        background: rgba(255, 255, 255, 0.15);
-        color: #ffffff !important;
-        transform: translateX(2px);
+        background: rgba(255, 255, 255, 0.1);
+        color: var(--text-on-blue) !important;
+        transform: translateX(4px);
+        border-left-color: var(--text-on-blue);
 
         span {
-          color: #ffffff !important;
+          color: var(--text-on-blue) !important;
         }
 
         mat-icon {
-          color: #ffffff !important;
+          color: var(--text-on-blue) !important;
         }
       }
 
       &.active-link {
-        background: rgba(255, 255, 255, 0.25);
-        color: #ffffff !important;
+        background: rgba(255, 255, 255, 0.15);
+        color: var(--text-on-blue) !important;
         font-weight: 600;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        border-left-color: var(--text-on-blue);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 
         span {
-          color: #ffffff !important;
+          color: var(--text-on-blue) !important;
         }
 
         mat-icon {
-          color: #ffffff !important;
+          color: var(--text-on-blue) !important;
         }
-      }
-
-      mat-icon {
-        color: #ffffff !important;
-        transition: color 0.3s ease;
       }
     }
   }
@@ -101,18 +121,19 @@ mat-sidenav-content {
   height: 100vh;
   overflow: hidden;
   position: relative;
-  background: #f5f5f5;
+  background: var(--bg-primary);
 }
 
 .toolbar {
-  background: linear-gradient(90deg, #1e40af 0%, #2563eb 50%, #3b82f6 100%) !important;
-  box-shadow: 0 4px 12px rgba(30, 64, 175, 0.25);
+  background: var(--bg-secondary) !important;
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border-color);
   z-index: 1000;
-  color: white !important;
+  color: var(--text-primary) !important;
   position: sticky;
-  top: 16px;
-  margin: 0 16px 16px 16px;
-  border-radius: 12px;
+  top: var(--spacing-md);
+  margin: 0 var(--spacing-md) var(--spacing-md) var(--spacing-md);
+  border-radius: var(--radius-lg);
   height: 64px;
   min-height: 64px;
   flex-shrink: 0;
@@ -120,8 +141,8 @@ mat-sidenav-content {
   .toolbar-title {
     font-size: 20px;
     font-weight: 600;
-    color: white;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    color: var(--text-primary);
+    letter-spacing: -0.3px;
   }
 
   .spacer {
@@ -131,107 +152,77 @@ mat-sidenav-content {
   .toolbar-actions {
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: var(--spacing-md);
 
     .role-chip {
       font-size: 12px;
       height: 28px;
       font-weight: 500;
-      background: rgba(255, 255, 255, 0.2) !important;
-      color: white !important;
+      background: var(--bg-blue-section) !important;
+      background-image: linear-gradient(135deg, var(--primary-dark-blue) 0%, var(--secondary-blue) 100%) !important;
+      color: var(--text-on-blue) !important;
+      border: 1px solid rgba(255, 255, 255, 0.1) !important;
+      box-shadow: 0 1px 3px rgba(10, 37, 64, 0.2);
     }
 
     .user-button {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: var(--spacing-sm);
       text-transform: none;
       font-size: 14px;
-      color: white !important;
+      color: var(--text-primary) !important;
+      transition: all var(--transition-base);
+
+      &:hover {
+        background: rgba(77, 163, 255, 0.1);
+        border-radius: var(--radius-md);
+      }
 
       mat-icon {
-        color: white !important;
+        color: var(--text-secondary) !important;
       }
     }
   }
 
   // Override Material button colors in toolbar
   ::ng-deep button.mat-mdc-button {
-    color: white !important;
+    color: var(--text-primary) !important;
 
     mat-icon {
-      color: white !important;
+      color: var(--text-secondary) !important;
     }
   }
 }
 
 .content-wrapper {
   flex: 1;
-  padding: 24px;
+  padding: var(--spacing-lg);
   padding-top: 0;
   margin-top: 55px; // Space for floating toolbar
-  background: #f5f5f5;
+  background: transparent;
   overflow-y: auto;
   overflow-x: hidden;
   position: relative;
   min-height: 0; // Allow flex to control height
 }
 
-// Dark theme styles
-:host-context(.dark-theme) {
-  mat-sidenav-content {
-    background: #1a1a1a;
-  }
-
-  .content-wrapper {
-    background: #1a1a1a;
-    color: rgba(255, 255, 255, 0.87);
-  }
-
-  .sidenav {
-    background: linear-gradient(180deg, #1e3a8a 0%, #1e40af 50%, #2563eb 100%);
-    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.3);
-
-    .sidenav-header {
-      background: rgba(0, 0, 0, 0.2);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+// Menu styling in toolbar
+::ng-deep .mat-mdc-menu-panel {
+  background: var(--bg-elevated) !important;
+  border: 1px solid var(--border-color) !important;
+  box-shadow: var(--shadow-xl) !important;
+  border-radius: var(--radius-md) !important;
+  
+  .mat-mdc-menu-item {
+    color: var(--text-secondary) !important;
+    
+    &:hover {
+      background: var(--bg-card-hover) !important;
     }
-
-    mat-nav-list {
-      a {
-        color: #ffffff !important;
-
-        span {
-          color: #ffffff !important;
-        }
-
-        &:hover {
-          background: rgba(255, 255, 255, 0.12);
-          color: #ffffff !important;
-
-          span {
-            color: #ffffff !important;
-          }
-        }
-
-        &.active-link {
-          background: rgba(255, 255, 255, 0.2);
-          color: #ffffff !important;
-
-          span {
-            color: #ffffff !important;
-          }
-        }
-
-        mat-icon {
-          color: #ffffff !important;
-        }
-      }
+    
+    mat-icon {
+      color: var(--text-tertiary) !important;
     }
-  }
-
-  .toolbar {
-    background: linear-gradient(90deg, #1e3a8a 0%, #1e40af 50%, #2563eb 100%) !important;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
   }
 }

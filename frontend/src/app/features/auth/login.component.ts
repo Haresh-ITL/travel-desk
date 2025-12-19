@@ -29,23 +29,37 @@ import { AuthService } from '../../core/services/auth.service';
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.scss'],
   animations: [
-    trigger('fadeInUp', [
+    trigger('fadeInLeft', [
       transition(':enter', [
-        style({ opacity: 0, transform: 'translateY(50px) scale(0.9)' }),
-        animate('800ms cubic-bezier(0.34, 1.56, 0.64, 1)', 
-          style({ opacity: 1, transform: 'translateY(0) scale(1)' }))
+        style({ opacity: 0, transform: 'translateX(-50px)' }),
+        animate('1000ms cubic-bezier(0.25, 0.46, 0.45, 0.94)', 
+          style({ opacity: 1, transform: 'translateX(0)' }))
+      ])
+    ]),
+    trigger('fadeInRight', [
+      transition(':enter', [
+        style({ opacity: 0, transform: 'translateX(50px)' }),
+        animate('1000ms cubic-bezier(0.25, 0.46, 0.45, 0.94)', 
+          style({ opacity: 1, transform: 'translateX(0)' }))
+      ])
+    ]),
+    trigger('slideInUp', [
+      transition(':enter', [
+        style({ opacity: 0, transform: 'translateY(30px)' }),
+        animate('600ms cubic-bezier(0.25, 0.46, 0.45, 0.94)', 
+          style({ opacity: 1, transform: 'translateY(0)' }))
       ])
     ]),
     trigger('slideIn', [
       transition(':enter', [
-        style({ opacity: 0, transform: 'translateX(-30px) scale(0.95)' }),
-        animate('600ms cubic-bezier(0.34, 1.56, 0.64, 1)', 
-          style({ opacity: 1, transform: 'translateX(0) scale(1)' }))
-      ])
+        style({ opacity: 0, transform: 'translateY(20px)' }),
+        animate('500ms {{delay}}ms cubic-bezier(0.25, 0.46, 0.45, 0.94)', 
+          style({ opacity: 1, transform: 'translateY(0)' }))
+      ], { params: { delay: 0 } })
     ]),
     trigger('pulse', [
       state('default', style({ transform: 'scale(1)' })),
-      state('pulse', style({ transform: 'scale(1.08)' })),
+      state('pulse', style({ transform: 'scale(1.02)' })),
       transition('default <=> pulse', animate('400ms cubic-bezier(0.34, 1.56, 0.64, 1)'))
     ])
   ]
@@ -54,6 +68,24 @@ export class LoginComponent {
   loginForm: FormGroup;
   loading = false;
   hidePassword = true;
+
+  features = [
+    {
+      icon: 'flight_takeoff',
+      title: 'Seamless Travel Booking',
+      description: 'Book flights, hotels, and transportation in one place'
+    },
+    {
+      icon: 'approval',
+      title: 'Quick Approvals',
+      description: 'Streamlined approval workflow for managers'
+    },
+    {
+      icon: 'analytics',
+      title: 'Travel Analytics',
+      description: 'Track and optimize your travel expenses'
+    }
+  ];
 
   constructor(
     private fb: FormBuilder,

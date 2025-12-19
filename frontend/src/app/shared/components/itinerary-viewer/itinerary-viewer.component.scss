@@ -17,19 +17,21 @@
   width: 100%;
   height: 100%;
   margin: 0;
-  background: #ffffff;
+  background: var(--bg-elevated);
   border-radius: 0;
   overflow: hidden;
 }
 
-// Header - Compact
+// Header - Premium Executive Style
 .itinerary-header {
-  background: linear-gradient(135deg, #1e40af 0%, #2563eb 50%, #3b82f6 100%);
-  padding: 20px 24px;
+  background: var(--bg-secondary);
+  background-image: linear-gradient(135deg, var(--bg-secondary) 0%, var(--secondary-blue) 100%);
+  padding: var(--spacing-lg);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  color: white;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border-color);
 
   .header-left {
     display: flex;
@@ -44,76 +46,82 @@
 
     .header-info {
       h1 {
-        margin: 0 0 4px;
+        margin: 0 0 var(--spacing-xs);
         font-size: 22px;
         font-weight: 600;
-        color: white;
+        color: var(--text-primary);
       }
 
       p {
         margin: 0;
         font-size: 13px;
-        color: rgba(255, 255, 255, 0.85);
+        color: var(--text-tertiary);
       }
     }
   }
 
   .close-btn {
-    color: white;
+    color: var(--text-secondary);
     &:hover {
-      background: rgba(255, 255, 255, 0.15);
+      background: var(--bg-card-hover);
+      border-radius: var(--radius-sm);
     }
   }
 }
 
-// Body - Compact
+// Body - Premium Executive Style
 .itinerary-body {
-  padding: 20px 24px;
-  background: #f5f5f5;
+  padding: var(--spacing-lg);
+  background: var(--bg-primary);
   max-height: 75vh;
   overflow-y: auto;
 
   scrollbar-width: thin;
-  scrollbar-color: #2563eb #f5f5f5;
+  scrollbar-color: var(--secondary-blue) var(--bg-primary);
   &::-webkit-scrollbar {
     width: 6px;
   }
   &::-webkit-scrollbar-track {
-    background: #f5f5f5;
+    background: var(--bg-primary);
   }
   &::-webkit-scrollbar-thumb {
-    background: #2563eb;
+    background: var(--secondary-blue);
     border-radius: 3px;
+    
+    &:hover {
+      background: var(--accent-blue);
+    }
   }
 }
 
-// HTML Itinerary Section
+// HTML Itinerary Section - Premium Styling
 .html-itinerary-section {
-  background: white;
-  border-radius: 8px;
-  padding: 20px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-  margin-bottom: 20px;
+  background: var(--bg-elevated);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-md);
+  margin-bottom: var(--spacing-lg);
 
   .section-title {
     display: flex;
     align-items: center;
-    gap: 8px;
-    margin-bottom: 16px;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
     font-size: 18px;
     font-weight: 600;
-    color: #1a202c;
+    color: var(--text-primary);
 
     mat-icon {
       font-size: 22px;
       width: 22px;
       height: 22px;
-      color: #2563eb;
+      color: var(--accent-blue);
     }
   }
 
   .html-content {
-    color: #1a202c;
+    color: var(--text-primary);
     line-height: 1.6;
     font-size: 14px;
 
@@ -172,27 +180,35 @@
   }
 }
 
-// Summary Section - Compact
+// Summary Section - Premium Executive Cards
 .summary-section {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 12px;
-  margin-bottom: 24px;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
 
   .summary-item {
-    background: white;
-    padding: 14px 16px;
-    border-radius: 8px;
+    background: var(--bg-elevated);
+    padding: var(--spacing-md);
+    border-radius: var(--radius-md);
     display: flex;
     align-items: center;
-    gap: 10px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    gap: var(--spacing-sm);
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-sm);
+    transition: all var(--transition-base);
+
+    &:hover {
+      box-shadow: var(--shadow-md);
+      border-color: var(--border-color-hover);
+      transform: translateY(-2px);
+    }
 
     mat-icon {
       font-size: 22px;
       width: 22px;
       height: 22px;
-      color: #2563eb;
+      color: var(--accent-blue);
     }
 
     div {
@@ -202,7 +218,7 @@
 
       .summary-label {
         font-size: 10px;
-        color: #6b7280;
+        color: var(--text-tertiary);
         font-weight: 500;
         text-transform: uppercase;
         letter-spacing: 0.5px;
@@ -210,55 +226,62 @@
 
       .summary-value {
         font-size: 13px;
-        color: #1a202c;
+        color: var(--text-primary);
         font-weight: 600;
       }
     }
   }
 }
 
-// Section - Compact
+// Section - Premium Executive Style
 .section {
-  margin-bottom: 20px;
+  margin-bottom: var(--spacing-lg);
 
   .section-title {
     display: flex;
     align-items: center;
-    gap: 8px;
-    margin-bottom: 12px;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
     font-size: 16px;
     font-weight: 600;
-    color: #1a202c;
+    color: var(--text-primary);
 
     mat-icon {
       font-size: 20px;
       width: 20px;
       height: 20px;
-      color: #2563eb;
+      color: var(--accent-blue);
     }
   }
 }
 
-// Info Grid - Compact
+// Info Grid - Premium Cards
 .info-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 10px;
+  gap: var(--spacing-sm);
 
   .info-item {
-    background: white;
-    padding: 12px 14px;
-    border-radius: 6px;
+    background: var(--bg-elevated);
+    padding: var(--spacing-md);
+    border-radius: var(--radius-md);
     display: flex;
     align-items: center;
-    gap: 10px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+    gap: var(--spacing-sm);
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-sm);
+    transition: all var(--transition-base);
+
+    &:hover {
+      box-shadow: var(--shadow-md);
+      border-color: var(--border-color-hover);
+    }
 
     mat-icon {
       font-size: 18px;
       width: 18px;
       height: 18px;
-      color: #2563eb;
+      color: var(--accent-blue);
       flex-shrink: 0;
     }
 
@@ -270,14 +293,14 @@
 
       .info-label {
         font-size: 11px;
-        color: #6b7280;
+        color: var(--text-tertiary);
         font-weight: 500;
         text-transform: uppercase;
       }
 
       .info-value {
         font-size: 13px;
-        color: #1a202c;
+        color: var(--text-primary);
         font-weight: 600;
         word-break: break-word;
       }
@@ -285,12 +308,13 @@
   }
 }
 
-// Journey Container - Compact
+// Journey Container - Premium Executive Style
 .journey-container {
-  background: white;
-  border-radius: 8px;
-  padding: 16px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  background: var(--bg-elevated);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-md);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-md);
 
   .journey-route {
     display: flex;
@@ -430,12 +454,13 @@
   }
 }
 
-// Hotel Container - Compact
+// Hotel Container - Premium Executive Style
 .hotel-container {
-  background: white;
-  border-radius: 8px;
-  padding: 16px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  background: var(--bg-elevated);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-md);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-md);
 
   .hotel-main {
     margin-bottom: 12px;
@@ -506,12 +531,13 @@
   }
 }
 
-// Cab Container - Compact
+// Cab Container - Premium Executive Style
 .cab-container {
-  background: white;
-  border-radius: 8px;
-  padding: 16px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  background: var(--bg-elevated);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-md);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-md);
 
   .cab-header {
     display: flex;
@@ -625,12 +651,13 @@
   }
 }
 
-// Files Container
+// Files Container - Premium Styling
 .files-container {
-  background: white;
-  border-radius: 8px;
-  padding: 16px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  background: var(--bg-elevated);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-md);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-md);
 
   .files-grid {
     display: grid;
@@ -711,48 +738,16 @@
   }
 }
 
-// Dark Theme
-:host-context(.dark-theme) {
-  .itinerary-wrapper {
-    background: #1a1a1a;
-  }
+// Additional premium styling adjustments
+.hotel-name,
+.route-location,
+.cab-provider,
+.cab-time {
+  color: var(--text-primary);
+}
 
-  .itinerary-body {
-    background: #2d2d2d;
-    scrollbar-color: #2563eb #2d2d2d;
-
-    &::-webkit-scrollbar-track {
-      background: #2d2d2d;
-    }
-  }
-
-  .summary-item,
-  .info-item,
-  .journey-container,
-  .hotel-container,
-  .cab-container,
-  .files-container {
-    background: #252525;
-  }
-
-  .section-title {
-    color: #f7fafc;
-  }
-
-  .summary-value,
-  .info-value,
-  .route-location,
-  .hotel-name,
-  .cab-provider,
-  .cab-time {
-    color: #f7fafc;
-  }
-
-  .summary-label,
-  .info-label,
-  .route-time,
-  .hotel-address,
-  .cab-value {
-    color: #a0aec0;
-  }
+.hotel-address,
+.route-time,
+.cab-value {
+  color: var(--text-tertiary);
 }

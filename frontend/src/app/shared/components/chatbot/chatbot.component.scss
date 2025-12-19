@@ -8,12 +8,15 @@
 .chat-toggle-button {
   width: 60px;
   height: 60px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  background: var(--accent-blue) !important;
+  color: var(--text-primary) !important;
+  box-shadow: var(--shadow-md);
+  transition: all var(--transition-base);
 
   &:hover {
     transform: scale(1.1);
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+    box-shadow: var(--shadow-lg);
+    background: #5DB0FF !important;
   }
 
   mat-icon {
@@ -30,14 +33,15 @@
   width: 400px;
   height: 600px;
   max-height: calc(100vh - 100px);
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-xl);
   display: flex;
   flex-direction: column;
   overflow: hidden;
   transform-origin: bottom right;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all var(--transition-base);
 
   &.closed {
     opacity: 0;

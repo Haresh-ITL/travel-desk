@@ -7,13 +7,14 @@
   }
 
   .mat-mdc-dialog-title {
-    padding: 24px 24px 0 24px !important;
+    padding: var(--spacing-lg) var(--spacing-lg) 0 var(--spacing-lg) !important;
     margin: 0 !important;
-    background: linear-gradient(135deg, #1e40af 0%, #2563eb 50%, #3b82f6 100%) !important;
-    border-radius: 4px 4px 0 0 !important;
+    background: var(--bg-secondary) !important;
+    background-image: linear-gradient(135deg, var(--bg-secondary) 0%, var(--secondary-blue) 100%) !important;
+    border-radius: var(--radius-md) var(--radius-md) 0 0 !important;
     font-size: 22px !important;
     font-weight: 600 !important;
-    color: white !important;
+    color: var(--text-primary) !important;
     line-height: 1.3 !important;
     width: calc(100% + 48px) !important;
     margin-left: -24px !important;
@@ -22,6 +23,7 @@
     box-sizing: border-box !important;
     text-align: left !important;
     display: block !important;
+    border-bottom: 1px solid var(--border-color) !important;
     
     h2, &.dialog-title {
       margin: 0 !important;
