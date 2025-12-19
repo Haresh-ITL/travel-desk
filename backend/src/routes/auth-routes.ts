@@ -31,9 +31,6 @@ authRouter.post("/register", async (req, res) => {
 
 // simple login returning uuid for header use
 authRouter.post("/login", async (req, res) => {
-  logger.info("Login request received", {
-   body: req.body
-  });
   
   const { email, password } = req.body;
   const user = await User.findOne({ email });

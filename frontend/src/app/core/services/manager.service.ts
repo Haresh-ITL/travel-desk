@@ -27,4 +27,12 @@ export class ManagerService {
   makeDecision(requestUuid: string, decision: ManagerDecision): Observable<TravelRequest> {
     return this.http.put<TravelRequest>(`${this.apiUrl}/requests/${requestUuid}/decision`, decision);
   }
+
+  /**
+   * Get booking for a specific travel request (for viewing itinerary)
+   * @param requestUuid UUID of the travel request
+   */
+  getBookingByRequestUuid(requestUuid: string): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/requests/${requestUuid}/booking`);
+  }
 }

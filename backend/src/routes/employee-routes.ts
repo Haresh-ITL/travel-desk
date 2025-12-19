@@ -502,8 +502,8 @@ employeeRouter.get(
         flight: booking.flight,
         hotel: booking.hotel,
         cab: booking.cab,
-        itineraryHtml: booking.itineraryHtml,
         confirmationFiles: booking.confirmationFiles || [],
+        itineraryHtml: booking.itineraryHtml || "",
         status: booking.status,
         from: booking.from,
         to: booking.to,
@@ -518,7 +518,8 @@ employeeRouter.get(
           startDate: travelRequest.startDate,
           endDate: travelRequest.endDate,
           purpose: travelRequest.purpose,
-          status: travelRequest.status
+          status: travelRequest.status,
+          filePaths: travelRequest.filePaths || []
         }
       });
     } catch (error) {

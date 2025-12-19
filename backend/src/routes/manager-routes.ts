@@ -3,6 +3,7 @@ import multer from "multer";
 import { uuid } from "uuidv4";
 import { requireUser, requireRole } from "../middleware/auth";
 import { TravelRequest } from "../models/travel-request";
+import { Booking } from "../models/bookings";
 import { User } from "../models/user";
 import { Role } from "../models/role";
 
@@ -152,6 +153,71 @@ managerRouter.put(
     } catch (error) {
       console.error('Error updating request decision:', error);
       res.status(500).json({ message: "Failed to update request" });
+    }
+  }
+);
+
+// Get booking for a specific travel request (for viewing itinerary)
+managerRouter.get(
+  "/requests/:requestUuid/booking",
+  requireUser,
+  requireRole(["ROLE_MANAGER", "MANAGER"]),
+  async (req, res) => {
+    try {
+      const { requestUuid } = req.params;
+      const managerUuid = req.user!.uuid;
+
+      // First verify the travel request belongs to this manager's team
+      const travelRequest = await TravelRequest.findOne({ 
+        uuid: requestUuid, 
+        primaryManagerId: managerUuid 
+      });
+      if (!travelRequest) {
+        return res.status(404).json({ message: "Travel request not found or access denied" });
+      }
+
+      // Find booking for this request
+      const booking = await Booking.findOne({ requestUuid }).lean();
+      if (!booking) {
+        return res.status(404).json({ message: "Booking not found for this request" });
+      }
+
+      // Return booking with travel request details
+      const employee = await User.findOne({ uuid: travelRequest.employeeId }).lean();
+      res.json({
+        uuid: booking.uuid,
+        requestUuid: booking.requestUuid,
+        flight: booking.flight,
+        hotel: booking.hotel,
+        cab: booking.cab,
+        confirmationFiles: booking.confirmationFiles || [],
+        itineraryHtml: booking.itineraryHtml || "",
+        status: booking.status,
+        from: booking.from,
+        to: booking.to,
+        createdAt: booking.createdAt,
+        updatedAt: booking.updatedAt,
+        confirmedAt: booking.confirmedAt,
+        travelRequest: {
+          uuid: travelRequest.uuid,
+          employeeId: travelRequest.employeeId,
+          employeeName: employee?.name || travelRequest.employeeId,
+          from: travelRequest.from,
+          to: travelRequest.to,
+          travelType: travelRequest.travelType,
+          startDate: travelRequest.startDate,
+          endDate: travelRequest.endDate,
+          purpose: travelRequest.purpose,
+          status: travelRequest.status,
+          filePaths: travelRequest.filePaths || []
+        }
+      });
+    } catch (error) {
+      console.error('Error fetching booking for manager:', error);
+      res.status(500).json({ 
+        message: "Failed to fetch booking",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
     }
   }
 );

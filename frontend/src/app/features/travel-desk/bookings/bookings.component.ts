@@ -50,6 +50,11 @@ export class BookingsComponent implements OnInit {
   // Edit Travel Request
   editingRequest: TravelRequest | null = null;
   selectedFiles: File[] = [];
+  
+  // Edit Booking Files
+  editingBooking: BookingWithDetails | null = null;
+  existingFiles: Array<{ fileName: string; base64?: string; mimeType?: string; url?: string; index?: number }> = [];
+  newFiles: File[] = [];
 
   RequestStatus = RequestStatus;
   TransportMode = TransportMode;
@@ -349,6 +354,119 @@ export class BookingsComponent implements OnInit {
       maxHeight: '100vh',
       panelClass: 'no-padding-dialog',
       data: itineraryData
+    });
+  }
+
+  editBookingFiles(booking: BookingWithDetails): void {
+    this.editingBooking = booking;
+    // Load existing files
+    this.existingFiles = [];
+    if (booking.confirmationFiles && Array.isArray(booking.confirmationFiles)) {
+      booking.confirmationFiles.forEach((file: any, index: number) => {
+        if (typeof file === 'string') {
+          this.existingFiles.push({ fileName: file.split('/').pop() || 'file', url: file, index });
+        } else if (file && typeof file === 'object') {
+          this.existingFiles.push({ ...file, index });
+        }
+      });
+    }
+    this.newFiles = [];
+  }
+
+  cancelEditFiles(): void {
+    this.editingBooking = null;
+    this.existingFiles = [];
+    this.newFiles = [];
+  }
+
+  removeExistingFile(index: number): void {
+    this.existingFiles.splice(index, 1);
+  }
+
+  onNewFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files.length > 0) {
+      Array.from(input.files).forEach(file => {
+        const maxSize = 10 * 1024 * 1024; // 10MB
+        if (file.size > maxSize) {
+          this.snackBar.open(`File "${file.name}" is too large. Maximum size is 10MB.`, 'Close', { duration: 5000 });
+          return;
+        }
+        
+        const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+        if (!allowedTypes.includes(file.type)) {
+          this.snackBar.open(`File "${file.name}" type is not allowed. Please upload PDF, images, or Word documents.`, 'Close', { duration: 5000 });
+          return;
+        }
+        
+        this.newFiles.push(file);
+      });
+    }
+    input.value = '';
+  }
+
+  removeNewFile(index: number): void {
+    this.newFiles.splice(index, 1);
+  }
+
+  async saveBookingFiles(): Promise<void> {
+    if (!this.editingBooking) return;
+
+    this.loading = true;
+    
+    // Convert new files to base64
+    const newConfirmationFiles: Array<{ fileName: string; base64: string; mimeType: string }> = [];
+    
+    for (const file of this.newFiles) {
+      try {
+        const base64 = await this.fileToBase64(file);
+        newConfirmationFiles.push({
+          fileName: file.name,
+          base64: base64,
+          mimeType: file.type || 'application/octet-stream'
+        });
+      } catch (error) {
+        console.error('Error converting file to base64:', error);
+        this.snackBar.open(`Error processing file ${file.name}`, 'Close', { duration: 3000 });
+      }
+    }
+    
+    // Combine existing files (that weren't removed) with new files
+    // Only include existing files that have base64 data (not URL-only files)
+    const existingFilesToKeep = this.existingFiles
+      .filter(file => file.base64) // Only keep files with base64 data
+      .map(file => ({
+        fileName: file.fileName,
+        base64: file.base64!,
+        mimeType: file.mimeType || 'application/octet-stream'
+      }));
+    
+    const allConfirmationFiles = [
+      ...existingFilesToKeep,
+      ...newConfirmationFiles
+    ];
+    
+    // Update booking with new files
+    this.travelDeskService.updateBooking(this.editingBooking.uuid, {
+      confirmationFiles: allConfirmationFiles
+    }).subscribe({
+      next: (updatedBooking) => {
+        this.snackBar.open('Booking files updated successfully', 'Close', { duration: 3000 });
+        // Update the booking in the list
+        const index = this.bookedBookings.findIndex(b => b.uuid === updatedBooking.uuid);
+        if (index !== -1) {
+          this.bookedBookings[index] = updatedBooking;
+        }
+        this.loading = false;
+        this.cancelEditFiles();
+        // Reload booked requests to get updated data
+        this.loadBookedRequests();
+      },
+      error: (error) => {
+        console.error('Error updating booking files:', error);
+        this.snackBar.open('Failed to update booking files', 'Close', { duration: 5000 });
+        this.loading = false;
+      }
     });
   }
 

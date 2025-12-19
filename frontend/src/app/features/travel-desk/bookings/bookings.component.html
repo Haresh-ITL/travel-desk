@@ -189,6 +189,9 @@
                     <button mat-icon-button color="primary" (click)="viewItinerary(booking)" matTooltip="View Itinerary">
                       <mat-icon>confirmation_number</mat-icon>
                     </button>
+                    <button mat-icon-button color="accent" (click)="editBookingFiles(booking)" matTooltip="Edit Files">
+                      <mat-icon>attach_file</mat-icon>
+                    </button>
                   </div>
                 </td>
               </ng-container>
@@ -268,6 +271,85 @@
             Save as BOOKED
           </button>
           <button mat-stroked-button (click)="cancelEdit()" [disabled]="loading">
+            Cancel
+          </button>
+        </div>
+      </div>
+    </mat-card>
+  </div>
+
+  <!-- Edit Booking Files Dialog -->
+  <div *ngIf="editingBooking" class="edit-dialog-overlay">
+    <mat-card class="edit-dialog">
+      <div class="dialog-header">
+        <h2>Edit Booking Files</h2>
+        <button mat-icon-button (click)="cancelEditFiles()">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+      
+      <div class="dialog-content">
+        <div class="request-info">
+          <p><strong>Employee:</strong> {{ editingBooking.travelRequest?.employeeName || 'N/A' }}</p>
+          <p><strong>From:</strong> {{ editingBooking.from || editingBooking.travelRequest?.from || 'N/A' }}</p>
+          <p><strong>To:</strong> {{ editingBooking.to || editingBooking.travelRequest?.to || 'N/A' }}</p>
+          <p><strong>Booking ID:</strong> {{ editingBooking.uuid }}</p>
+        </div>
+        
+        <!-- Existing Files -->
+        <div class="file-upload-section">
+          <h3>Existing Files</h3>
+          <div *ngIf="existingFiles.length > 0" class="selected-files">
+            <div class="file-list">
+              <div *ngFor="let file of existingFiles; let i = index" class="file-item">
+                <mat-icon>description</mat-icon>
+                <span>{{ file.fileName }}</span>
+                <button mat-icon-button color="warn" (click)="removeExistingFile(i)" matTooltip="Remove file">
+                  <mat-icon>close</mat-icon>
+                </button>
+              </div>
+            </div>
+          </div>
+          <p *ngIf="existingFiles.length === 0" class="no-files-text">No existing files</p>
+        </div>
+        
+        <!-- Add New Files -->
+        <div class="file-upload-section">
+          <h3>Add New Files (PDF, Images, Word)</h3>
+          <div class="file-input-wrapper">
+            <input 
+              type="file" 
+              #newFileInput 
+              (change)="onNewFileSelected($event)" 
+              multiple 
+              accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+              style="display: none;">
+            <button mat-stroked-button (click)="newFileInput.click()">
+              <mat-icon>attach_file</mat-icon>
+              Choose Files
+            </button>
+          </div>
+          
+          <div *ngIf="newFiles.length > 0" class="selected-files">
+            <h4>New Files to Add:</h4>
+            <div class="file-list">
+              <div *ngFor="let file of newFiles; let i = index" class="file-item">
+                <mat-icon>description</mat-icon>
+                <span>{{ getFileName(file) }}</span>
+                <button mat-icon-button color="warn" (click)="removeNewFile(i)" matTooltip="Remove file">
+                  <mat-icon>close</mat-icon>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="dialog-actions">
+          <button mat-raised-button color="primary" (click)="saveBookingFiles()" [disabled]="loading">
+            <mat-icon>save</mat-icon>
+            Save Changes
+          </button>
+          <button mat-stroked-button (click)="cancelEditFiles()" [disabled]="loading">
             Cancel
           </button>
         </div>

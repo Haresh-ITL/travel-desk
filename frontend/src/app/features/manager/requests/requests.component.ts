@@ -13,7 +13,9 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { EmployeeService } from '../../../core/services/employee.service';
-import { TravelRequest, RequestStatus, TransportMode, ItineraryData } from '../../../shared/models';
+import { ManagerService } from '../../../core/services/manager.service';
+import { TravelDeskService } from '../../../core/services/travel-desk.service';
+import { TravelRequest, RequestStatus, TransportMode, ItineraryData, BookingWithDetails } from '../../../shared/models';
 import { ItineraryViewerComponent } from '../../../shared/components/itinerary-viewer/itinerary-viewer.component';
 import { TravelRequestDialogComponent } from '../../employee/requests/travel-request-dialog.component';
 
@@ -59,6 +61,8 @@ export class ManagerRequestsComponent implements OnInit, AfterViewInit {
 
   constructor(
     private employeeService: EmployeeService,
+    private managerService: ManagerService,
+    private travelDeskService: TravelDeskService,
     private dialog: MatDialog,
     private snackBar: MatSnackBar
   ) {}
@@ -171,73 +175,119 @@ export class ManagerRequestsComponent implements OnInit, AfterViewInit {
   }
 
   viewItinerary(request: TravelRequest): void {
-    const now = new Date();
+    if (!request || !request.uuid) {
+      this.snackBar.open('Invalid request data', 'Close', { duration: 3000, panelClass: ['error-snackbar'] });
+      return;
+    }
+
+    // Fetch real booking data from backend using manager service
+    this.managerService.getBookingByRequestUuid(request.uuid).subscribe({
+      next: (booking: any) => {
+        if (!booking) {
+          this.snackBar.open('Booking data not available', 'Close', { duration: 3000, panelClass: ['error-snackbar'] });
+          return;
+        }
+
+        // Build itinerary data from booking (same as admin/employee view)
+        // Files are already included in buildItineraryFromBooking
+        const itineraryData = this.buildItineraryFromBooking(request, booking);
+        
+        this.dialog.open(ItineraryViewerComponent, {
+          width: '1000px',
+          maxWidth: '100vw',
+          maxHeight: '100vh',
+          panelClass: 'no-padding-dialog',
+          data: itineraryData
+        });
+      },
+      error: (error) => {
+        console.error('Error fetching booking:', error);
+        this.snackBar.open(
+          error?.status === 404 
+            ? 'Booking not found for this request. Please contact travel desk.' 
+            : 'Failed to load itinerary. Please try again later.',
+          'Close',
+          { duration: 5000, panelClass: ['error-snackbar'] }
+        );
+      }
+    });
+  }
+
+  private buildItineraryFromBooking(request: TravelRequest, booking: any): ItineraryData {
+    const startDate = request.startDate ? new Date(request.startDate) : new Date();
+    const endDate = request.endDate ? new Date(request.endDate) : new Date();
+    
     const itineraryData: ItineraryData = {
       employeeName: request.employeeName || 'Employee',
-      employeeId: 'EMP-' + (request.employeeUuid || '001'),
-      designation: 'Manager',
-      department: 'Management',
-      travelRequestId: request.uuid,
-      purpose: request.purpose,
+      travelRequestId: request.uuid || '',
+      purpose: request.purpose || '',
       travelType: request.travelType,
-      startDate: request.startDate,
-      endDate: request.endDate,
-      emergencyContact: {
-        name: 'Emergency Contact',
-        phone: '+1-234-567-8900',
-        relationship: 'Spouse'
-      },
-      outboundJourney: {
-        transportType: request.modeOfTransport === TransportMode.FLIGHT ? 'FLIGHT' : 'TRAIN',
-        provider: request.modeOfTransport === TransportMode.FLIGHT ? 'American Airlines' : 'Amtrak',
-        number: request.modeOfTransport === TransportMode.FLIGHT ? 'AA1234' : 'AMT-456',
-        from: `${request.from} (${request.modeOfTransport === TransportMode.FLIGHT ? 'JFK' : 'NYC'})`,
-        to: `${request.to} (${request.modeOfTransport === TransportMode.FLIGHT ? 'LAX' : 'LAX'})`,
-        departureDateTime: new Date(request.startDate.getTime() + 8 * 60 * 60 * 1000),
-        arrivalDateTime: new Date(request.startDate.getTime() + 14 * 60 * 60 * 1000),
-        seatNumber: request.modeOfTransport === TransportMode.FLIGHT ? '12A' : 'Car 3, Seat 45',
-        bookingReference: 'PNR-' + Math.random().toString(36).substr(2, 9).toUpperCase(),
-        ticketNumber: 'TKT-' + Math.random().toString(36).substr(2, 12).toUpperCase()
-      },
-      returnJourney: request.endDate > request.startDate ? {
-        transportType: request.modeOfTransport === TransportMode.FLIGHT ? 'FLIGHT' : 'TRAIN',
-        provider: request.modeOfTransport === TransportMode.FLIGHT ? 'American Airlines' : 'Amtrak',
-        number: request.modeOfTransport === TransportMode.FLIGHT ? 'AA5678' : 'AMT-789',
-        from: `${request.to} (${request.modeOfTransport === TransportMode.FLIGHT ? 'LAX' : 'LAX'})`,
-        to: `${request.from} (${request.modeOfTransport === TransportMode.FLIGHT ? 'JFK' : 'NYC'})`,
-        departureDateTime: new Date(request.endDate.getTime() + 10 * 60 * 60 * 1000),
-        arrivalDateTime: new Date(request.endDate.getTime() + 16 * 60 * 60 * 1000),
-        seatNumber: request.modeOfTransport === TransportMode.FLIGHT ? '15B' : 'Car 2, Seat 32',
-        bookingReference: 'PNR-' + Math.random().toString(36).substr(2, 9).toUpperCase(),
-        ticketNumber: 'TKT-' + Math.random().toString(36).substr(2, 12).toUpperCase()
-      } : undefined,
-      hotelDetails: {
-        name: 'Grand Hotel ' + request.to,
-        address: '123 Main Street, ' + request.to + ', USA',
-        contactNumber: '+1-555-123-4567',
-        checkinDateTime: new Date(request.startDate.getTime() + 15 * 60 * 60 * 1000),
-        checkoutDateTime: new Date(request.endDate.getTime() + 11 * 60 * 60 * 1000),
-        roomType: 'Double',
-        bookingReference: 'HTL-' + Math.random().toString(36).substr(2, 9).toUpperCase()
-      },
-      cabDetails: {
-        provider: 'Uber',
-        pickupLocation: request.from + ' Airport',
-        dropLocation: 'Grand Hotel ' + request.to,
-        pickupDateTime: new Date(request.startDate.getTime() + 14 * 60 * 60 * 1000 + 30 * 60 * 1000),
-        driverName: 'Michael Johnson',
-        driverContact: '+1-555-987-6543',
-        vehicleNumber: 'UBR-' + Math.random().toString(36).substr(2, 6).toUpperCase()
-      }
+      startDate: startDate,
+      endDate: endDate,
+      from: booking?.from || request.from || '',
+      to: booking?.to || request.to || '',
+      // Include confirmation files and file paths
+      confirmationFiles: booking?.confirmationFiles || [],
+      filePaths: booking?.travelRequest?.filePaths || []
     };
 
-    this.dialog.open(ItineraryViewerComponent, {
-      width: '1000px',
-      maxWidth: '100vw',
-      maxHeight: '100vh',
-      panelClass: 'no-padding-dialog',
-      data: itineraryData
-    });
+    // Parse flight details if available
+    if (booking?.flight) {
+      const flightStr = typeof booking.flight === 'string' ? booking.flight : '';
+      itineraryData.outboundJourney = {
+        transportType: 'FLIGHT',
+        provider: flightStr.split(' ')[0] || 'Airline',
+        number: flightStr.split(' ').slice(1).join(' ') || '',
+        from: booking.from || request.from || '',
+        to: booking.to || request.to || '',
+        departureDateTime: startDate,
+        arrivalDateTime: startDate
+      };
+    }
+
+    // Parse hotel details if available
+    if (booking?.hotel) {
+      if (typeof booking.hotel === 'object' && booking.hotel.name) {
+        itineraryData.hotelDetails = {
+          name: booking.hotel.name || '',
+          address: booking.hotel.location || '',
+          contactNumber: booking.hotel.phoneNumber || '',
+          checkinDateTime: startDate,
+          checkoutDateTime: endDate,
+          roomType: booking.hotel.roomNumber || ''
+        };
+      } else if (typeof booking.hotel === 'string') {
+        itineraryData.hotelDetails = {
+          name: booking.hotel,
+          address: request.to || '',
+          checkinDateTime: startDate,
+          checkoutDateTime: endDate
+        };
+      }
+    }
+
+    // Parse cab details if available
+    if (booking?.cab) {
+      if (typeof booking.cab === 'object' && booking.cab.name) {
+        itineraryData.cabDetails = {
+          provider: booking.cab.name || '',
+          pickupLocation: booking.from || request.from || '',
+          dropLocation: booking.to || request.to || '',
+          pickupDateTime: startDate,
+          driverName: booking.cab.driverName || '',
+          driverContact: booking.cab.phoneNumber || ''
+        };
+      } else if (typeof booking.cab === 'string') {
+        itineraryData.cabDetails = {
+          provider: booking.cab,
+          pickupLocation: booking.from || request.from || '',
+          dropLocation: booking.to || request.to || '',
+          pickupDateTime: startDate
+        };
+      }
+    }
+
+    return itineraryData;
   }
 
   formatDate(date: Date): string {

@@ -212,38 +212,20 @@ export class RequestsComponent implements OnInit, AfterViewInit {
           return;
         }
 
-        // If booking has itineraryHtml, use it directly
-        if (booking.itineraryHtml) {
-          const itineraryData: ItineraryData = {
-            employeeName: request.employeeName || 'Employee',
-            travelRequestId: request.uuid,
-            purpose: request.purpose || '',
-            travelType: request.travelType,
-            startDate: request.startDate ? new Date(request.startDate) : new Date(),
-            endDate: request.endDate ? new Date(request.endDate) : new Date(),
-            from: request.from || '',
-            to: request.to || '',
-            itineraryHtml: booking.itineraryHtml
-          };
-
-          this.dialog.open(ItineraryViewerComponent, {
-            width: '1000px',
-            maxWidth: '100vw',
-            maxHeight: '100vh',
-            panelClass: 'no-padding-dialog',
-            data: itineraryData
-          });
-        } else {
-          // If no itineraryHtml, try to build from booking details
-          const itineraryData = this.buildItineraryFromBooking(request, booking);
-          this.dialog.open(ItineraryViewerComponent, {
-            width: '1000px',
-            maxWidth: '100vw',
-            maxHeight: '100vh',
-            panelClass: 'no-padding-dialog',
-            data: itineraryData
-          });
-        }
+        // Build itinerary data from booking (same as admin view)
+        const itineraryData = this.buildItineraryFromBooking(request, booking);
+        
+        // Include confirmation files and file paths
+        itineraryData.confirmationFiles = booking.confirmationFiles || [];
+        itineraryData.filePaths = (booking.travelRequest as any)?.filePaths || [];
+        
+        this.dialog.open(ItineraryViewerComponent, {
+          width: '1000px',
+          maxWidth: '100vw',
+          maxHeight: '100vh',
+          panelClass: 'no-padding-dialog',
+          data: itineraryData
+        });
       },
       error: (error) => {
         console.error('Error fetching booking:', error);
@@ -271,7 +253,10 @@ export class RequestsComponent implements OnInit, AfterViewInit {
       startDate: startDate,
       endDate: endDate,
       from: booking?.from || request.from || '',
-      to: booking?.to || request.to || ''
+      to: booking?.to || request.to || '',
+      // Include confirmation files and file paths
+      confirmationFiles: booking?.confirmationFiles || [],
+      filePaths: booking?.travelRequest?.filePaths || []
     };
 
     // Parse flight details if available

@@ -653,28 +653,36 @@ travelDeskRouter.put(
       // Don't save itineraryHtml - generate on demand instead
       // Remove any existing itineraryHtml
       booking.itineraryHtml = "";
-      // Handle base64 file uploads if provided
-      if (confirmationFiles && Array.isArray(confirmationFiles) && confirmationFiles.length > 0) {
-        // Store files as objects with fileName and base64 (base64 is already encoded, store as-is)
-        const newFiles = confirmationFiles.map((file: any) => {
-          // Ensure base64 is a string and not double-encoded
-          let base64Data = file.base64;
-          if (typeof base64Data !== 'string') {
-            base64Data = String(base64Data);
-          }
-          // Remove any data URL prefix if present (shouldn't be, but safety check)
-          if (base64Data.includes(',')) {
-            base64Data = base64Data.split(',')[1];
-          }
-          
-          return {
-            fileName: file.fileName || 'unknown',
-            base64: base64Data, // Store base64 string directly
-            mimeType: file.mimeType || 'application/octet-stream'
-          };
-        });
-        // Append to existing files
-        booking.confirmationFiles = [...(booking.confirmationFiles || []), ...newFiles];
+      
+      // Handle confirmation files - replace existing files if provided
+      if (confirmationFiles !== undefined) {
+        if (Array.isArray(confirmationFiles) && confirmationFiles.length > 0) {
+          // Process and replace all files
+          const processedFiles = confirmationFiles.map((file: any) => {
+            // Ensure base64 is a string and not double-encoded
+            let base64Data = file.base64;
+            if (typeof base64Data !== 'string') {
+              base64Data = String(base64Data);
+            }
+            // Remove any data URL prefix if present (shouldn't be, but safety check)
+            if (base64Data.includes(',')) {
+              base64Data = base64Data.split(',')[1];
+            }
+            
+            return {
+              fileName: file.fileName || 'unknown',
+              base64: base64Data, // Store base64 string directly
+              mimeType: file.mimeType || 'application/octet-stream'
+            };
+          });
+          // Replace all files (not append)
+          booking.confirmationFiles = processedFiles;
+          console.log('Updated booking files:', processedFiles.length, 'files');
+        } else {
+          // Empty array means remove all files
+          booking.confirmationFiles = [];
+          console.log('Removed all booking files');
+        }
       }
 
       booking.updatedAt = new Date();
