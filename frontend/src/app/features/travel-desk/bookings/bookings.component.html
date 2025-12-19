@@ -41,12 +41,12 @@
 
           <ng-container matColumnDef="from">
             <th mat-header-cell *matHeaderCellDef>From</th>
-            <td mat-cell *matCellDef="let request">{{ request.from }}</td>
+            <td mat-cell *matCellDef="let request">{{ request.from || 'N/A' }}</td>
           </ng-container>
 
           <ng-container matColumnDef="to">
             <th mat-header-cell *matHeaderCellDef>To</th>
-            <td mat-cell *matCellDef="let request">{{ request.to }}</td>
+            <td mat-cell *matCellDef="let request">{{ request.to || 'N/A' }}</td>
           </ng-container>
 
           <ng-container matColumnDef="travelType">
@@ -114,13 +114,13 @@
       
       <div class="dialog-content">
         <div class="request-info">
-          <p><strong>Employee:</strong> {{ editingRequest.employeeName }}</p>
-          <p><strong>From:</strong> {{ editingRequest.from }}</p>
-          <p><strong>To:</strong> {{ editingRequest.to }}</p>
-          <p><strong>Travel Type:</strong> {{ editingRequest.travelType }}</p>
+          <p><strong>Employee:</strong> {{ editingRequest.employeeName || 'N/A' }}</p>
+          <p><strong>From:</strong> {{ editingRequest.from || 'N/A' }}</p>
+          <p><strong>To:</strong> {{ editingRequest.to || 'N/A' }}</p>
+          <p><strong>Travel Type:</strong> {{ editingRequest.travelType || 'N/A' }}</p>
           <p><strong>Start Date:</strong> {{ formatDate(editingRequest.startDate) }}</p>
           <p><strong>End Date:</strong> {{ formatDate(editingRequest.endDate) }}</p>
-          <p><strong>Purpose:</strong> {{ editingRequest.purpose }}</p>
+          <p><strong>Purpose:</strong> {{ editingRequest.purpose || 'N/A' }}</p>
         </div>
         
         <div class="file-upload-section">

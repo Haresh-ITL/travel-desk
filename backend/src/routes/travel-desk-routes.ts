@@ -7,6 +7,7 @@ import { TravelRequest } from "../models/travel-request";
 import { User } from "../models/user";
 import { Role } from "../models/role";
 import path from "path";
+import { generateItineraryHTML } from "../utils/itinerary-generator";
 
 const upload = multer({ dest: "uploads/" });
 export const travelDeskRouter = Router();
@@ -64,6 +65,8 @@ travelDeskRouter.get(
 );
 
 // Update travel request and set status to BOOKED (with file upload support)
+// NOTE: This endpoint is deprecated. Use POST /bookings instead to create proper bookings.
+// This endpoint is kept for backward compatibility but should create a booking record.
 travelDeskRouter.put(
   "/requests/:uuid/book",
   requireUser,
@@ -74,17 +77,24 @@ travelDeskRouter.put(
   ]),
   async (req, res) => {
     try {
-      const { uuid } = req.params;
-      console.log('PUT /requests/:uuid/book - UUID:', uuid);
+      const { uuid: requestUuid } = req.params;
+      console.log('PUT /requests/:uuid/book - UUID:', requestUuid);
       
-      const travelRequest = await TravelRequest.findOne({ uuid });
+      const travelRequest = await TravelRequest.findOne({ uuid: requestUuid });
       
       if (!travelRequest) {
-        console.log('Travel request not found for UUID:', uuid);
-        return res.status(404).json({ message: "Travel request not found", uuid });
+        console.log('Travel request not found for UUID:', requestUuid);
+        return res.status(404).json({ message: "Travel request not found", uuid: requestUuid });
       }
 
       console.log('Found travel request:', travelRequest.uuid, 'Status:', travelRequest.status);
+
+      // BUSINESS RULE: Only APPROVED requests can be booked
+      if (travelRequest.status !== "APPROVED") {
+        return res.status(400).json({ 
+          message: `Cannot book request with status: ${travelRequest.status}. Only APPROVED requests can be booked.` 
+        });
+      }
 
       // Handle file uploads
       const files = req.files as { [fieldname: string]: Express.Multer.File[] };
@@ -101,6 +111,24 @@ travelDeskRouter.put(
         const newFilePaths = allUploadedFiles.map((f) => f.path);
         travelRequest.filePaths = [...(travelRequest.filePaths || []), ...newFilePaths];
         console.log('Added file paths:', newFilePaths);
+      }
+
+      // Create a basic booking record if one doesn't exist
+      let booking = await Booking.findOne({ requestUuid });
+      if (!booking) {
+        booking = await Booking.create({
+          uuid: uuid(),
+          requestUuid: requestUuid,
+          flight: undefined,
+          hotel: undefined,
+          cab: undefined,
+          confirmationFiles: [],
+          itineraryHtml: "",
+          status: "PENDING" as BookingStatus,
+          from: travelRequest.from,
+          to: travelRequest.to
+        });
+        console.log('Created basic booking record:', booking.uuid);
       }
 
       // Update travel request status to BOOKED
@@ -129,8 +157,15 @@ travelDeskRouter.post(
   requireRole(["ROLE_TRAVEL_DESK_ADMIN", "TRAVEL_DESK_ADMIN"]),
   async (req, res) => {
     try {
+      // Log the entire request for debugging
+      console.log('POST /bookings - Request received');
+      console.log('Request body:', JSON.stringify(req.body, null, 2));
+      console.log('Request body keys:', Object.keys(req.body || {}));
+      console.log('Content-Type:', req.get('Content-Type'));
+      
       const { 
-        requestUuid, 
+        requestUuid,
+        travelRequestId, // Support both field names for compatibility
         flightAirline,
         flightNumber,
         flightDepartureAirport,
@@ -149,10 +184,67 @@ travelDeskRouter.post(
         flightConfirmationUrl,
         hotelConfirmationUrl,
         cabConfirmationUrl
-      } = req.body;
+      } = req.body || {};
       
-      const travelRequest = await TravelRequest.findOne({ uuid: requestUuid });
-      if (!travelRequest) return res.status(404).json({ message: "Request not found" });
+      // Use requestUuid or travelRequestId (support both for compatibility)
+      const finalRequestUuid = requestUuid || travelRequestId;
+      
+      console.log('Extracted requestUuid:', requestUuid);
+      console.log('Extracted travelRequestId:', travelRequestId);
+      console.log('Final requestUuid:', finalRequestUuid);
+      
+      if (!finalRequestUuid) {
+        console.error('POST /bookings - Missing requestUuid. Body:', JSON.stringify(req.body));
+        return res.status(400).json({ 
+          message: "requestUuid is required",
+          received: {
+            requestUuid: requestUuid || null,
+            travelRequestId: travelRequestId || null,
+            bodyKeys: Object.keys(req.body || {}),
+            bodyType: typeof req.body,
+            bodyStringified: JSON.stringify(req.body)
+          }
+        });
+      }
+      
+      console.log('POST /bookings - Creating booking for requestUuid:', finalRequestUuid);
+      
+      const travelRequest = await TravelRequest.findOne({ uuid: finalRequestUuid });
+      if (!travelRequest) {
+        console.error('Travel request not found for UUID:', finalRequestUuid);
+        return res.status(404).json({ 
+          message: "Request not found",
+          requestUuid: finalRequestUuid
+        });
+      }
+
+      console.log('Found travel request:', {
+        uuid: travelRequest.uuid,
+        status: travelRequest.status,
+        employeeId: travelRequest.employeeId,
+        from: travelRequest.from,
+        to: travelRequest.to,
+        fromType: typeof travelRequest.from,
+        toType: typeof travelRequest.to
+      });
+
+      // BUSINESS RULE: Only APPROVED requests can be booked
+      if (travelRequest.status !== "APPROVED") {
+        console.error('Cannot book request - status is:', travelRequest.status);
+        return res.status(400).json({ 
+          message: `Cannot create booking for request with status: ${travelRequest.status}. Only APPROVED requests can be booked.`,
+          currentStatus: travelRequest.status,
+          requestUuid: finalRequestUuid
+        });
+      }
+
+      // Check if booking already exists for this request
+      const existingBooking = await Booking.findOne({ requestUuid: finalRequestUuid });
+      if (existingBooking) {
+        return res.status(400).json({ 
+          message: "Booking already exists for this request. Use PUT /bookings/:uuid to update." 
+        });
+      }
 
       // For POST route, we'll accept flight/hotel/cab as strings (simple text) or objects
       // The frontend can send them as strings for simplicity
@@ -168,27 +260,83 @@ travelDeskRouter.post(
         ? cabProvider
         : undefined;
 
+      console.log('Creating booking with data:', {
+        requestUuid: finalRequestUuid,
+        flight: flightValue,
+        hotel: hotelValue,
+        cab: cabValue,
+        itineraryHtml: itineraryHtml || ""
+      });
+
+      // Generate beautiful itinerary HTML template
+      const employeeForItinerary = await User.findOne({ uuid: travelRequest.employeeId }).lean();
+      let finalItineraryHtml = itineraryHtml || "";
+      
+      // If no HTML provided, generate a beautiful template from booking details
+      if (!finalItineraryHtml || finalItineraryHtml.trim() === "") {
+        finalItineraryHtml = generateItineraryHTML({
+          employeeName: employeeForItinerary?.name || "Employee",
+          requestUuid: finalRequestUuid,
+          from: travelRequest.from,
+          to: travelRequest.to,
+          travelType: travelRequest.travelType as 'DOMESTIC' | 'INTERNATIONAL',
+          startDate: travelRequest.startDate,
+          endDate: travelRequest.endDate,
+          purpose: travelRequest.purpose,
+          flight: flightValue,
+          hotel: hotelValue,
+          cab: cabValue
+        });
+      }
+      
+      // Ensure from and to are always provided (required for booking)
+      // Check if travelRequest has from/to values (they should be required in schema)
+      const bookingFrom = (travelRequest.from && String(travelRequest.from).trim()) || null;
+      const bookingTo = (travelRequest.to && String(travelRequest.to).trim()) || null;
+      
+      if (!bookingFrom || !bookingTo || bookingFrom === "" || bookingTo === "") {
+        console.error('Travel request missing from/to:', {
+          from: travelRequest.from,
+          to: travelRequest.to,
+          bookingFrom: bookingFrom,
+          bookingTo: bookingTo,
+          requestUuid: finalRequestUuid,
+          travelRequestDoc: JSON.stringify(travelRequest.toObject())
+        });
+        return res.status(400).json({ 
+          message: "Travel request is missing required location information (from/to). Please ensure the travel request has valid 'from' and 'to' locations.",
+          details: {
+            from: travelRequest.from || null,
+            to: travelRequest.to || null
+          }
+        });
+      }
+      
+      console.log('Creating booking with locations:', { from: bookingFrom, to: bookingTo });
+      
       const booking = await Booking.create({
         uuid: uuid(),
-        requestUuid,
+        requestUuid: finalRequestUuid,
         flight: flightValue,
         hotel: hotelValue,
         cab: cabValue,
         confirmationFiles: [],
-        itineraryHtml: itineraryHtml || "",
+        itineraryHtml: finalItineraryHtml,
         status: "PENDING" as BookingStatus,
-        from: travelRequest.from,
-        to: travelRequest.to
+        from: bookingFrom,
+        to: bookingTo
       });
+      console.log('Booking created successfully:', booking.uuid);
 
+      // Update travel request status to BOOKED only after successful booking creation
       travelRequest.status = "BOOKED";
       await travelRequest.save();
 
       // Populate travel request for response
-      const employee = await User.findOne({ uuid: travelRequest.employeeId }).lean();
+      const employeeForResponse = await User.findOne({ uuid: travelRequest.employeeId }).lean();
       const travelRequestData = {
         ...travelRequest.toObject(),
-        employeeName: employee?.name || travelRequest.employeeId
+        employeeName: employeeForResponse?.name || travelRequest.employeeId
       };
 
       res.json({
@@ -206,8 +354,35 @@ travelDeskRouter.post(
         updatedAt: booking.updatedAt,
         travelRequest: travelRequestData
       });
-    } catch (error) {
-      res.status(500).json({ message: "Failed to create booking" });
+    } catch (error: any) {
+      console.error('POST /bookings - Unhandled error:', error);
+      console.error('Error name:', error?.name);
+      console.error('Error message:', error?.message);
+      console.error('Error stack:', error?.stack);
+      console.error('Full error:', JSON.stringify(error, Object.getOwnPropertyNames(error)));
+      
+      // Handle Mongoose validation errors
+      if (error?.name === 'ValidationError') {
+        const validationErrors = Object.keys(error.errors || {}).map(key => ({
+          field: key,
+          message: error.errors[key].message
+        }));
+        console.error('Mongoose validation errors:', validationErrors);
+        return res.status(400).json({ 
+          message: "Validation error creating booking",
+          errors: validationErrors,
+          details: error.message
+        });
+      }
+      
+      // Handle other errors
+      const errorMessage = error instanceof Error ? error.message : (error?.message || "Unknown error");
+      console.error('Returning error response:', errorMessage);
+      res.status(500).json({ 
+        message: "Failed to create booking",
+        error: errorMessage,
+        details: error?.stack
+      });
     }
   }
 );
@@ -446,7 +621,7 @@ travelDeskRouter.put(
   async (req, res) => {
     try {
       const { uuid } = req.params;
-      const { flight, hotel, cab, from, to, status, confirmationFiles } = req.body;
+      const { flight, hotel, cab, from, to, status, confirmationFiles, itineraryHtml } = req.body;
 
       const booking = await Booking.findOne({ uuid });
       if (!booking) {
@@ -468,6 +643,30 @@ travelDeskRouter.put(
           if (oldStatus !== "CONFIRMED" && status === "CONFIRMED") {
             booking.confirmedAt = new Date();
           }
+        }
+      }
+      
+      // Regenerate itinerary HTML if booking details changed or if explicitly provided
+      if (itineraryHtml !== undefined) {
+        booking.itineraryHtml = itineraryHtml;
+      } else if (flight !== undefined || hotel !== undefined || cab !== undefined) {
+        // Auto-regenerate itinerary when booking details are updated
+        const travelRequest = await TravelRequest.findOne({ uuid: booking.requestUuid });
+        if (travelRequest) {
+          const employee = await User.findOne({ uuid: travelRequest.employeeId }).lean();
+          booking.itineraryHtml = generateItineraryHTML({
+            employeeName: employee?.name || "Employee",
+            requestUuid: booking.requestUuid,
+            from: booking.from || travelRequest.from,
+            to: booking.to || travelRequest.to,
+            travelType: travelRequest.travelType as 'DOMESTIC' | 'INTERNATIONAL',
+            startDate: travelRequest.startDate,
+            endDate: travelRequest.endDate,
+            purpose: travelRequest.purpose,
+            flight: booking.flight,
+            hotel: booking.hotel,
+            cab: booking.cab
+          });
         }
       }
       // Handle base64 file uploads if provided

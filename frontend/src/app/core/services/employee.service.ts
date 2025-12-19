@@ -58,4 +58,19 @@ export class EmployeeService {
   getDashboardStats(): Observable<DashboardStats> {
     return this.http.get<DashboardStats>(`${this.apiUrl}/dashboard/stats`);
   }
+
+  /**
+   * Get booking for a specific travel request (for viewing itinerary)
+   * @param requestUuid UUID of the travel request
+   */
+  getBookingByRequestUuid(requestUuid: string): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/requests/${requestUuid}/booking`);
+  }
+
+  /**
+   * Get all bookings for employee's travel requests
+   */
+  getBookings(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/bookings`);
+  }
 }

@@ -1,8 +1,9 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
-import { TravelRequest, BookingDetails, ProcessBookingsResponse, AllBookingsResponse, BookingFilters, BookingStatus, BookingWithDetails, UpdateBookingRequest } from '../../shared/models';
+import { TravelRequest, BookingDetails, ProcessBookingsResponse, AllBookingsResponse, BookingFilters, BookingStatus, BookingWithDetails, UpdateBookingRequest, TravelType, RequestStatus } from '../../shared/models';
 
 @Injectable({
   providedIn: 'root'
@@ -16,17 +17,91 @@ export class TravelDeskService {
     return this.http.get<TravelRequest[]>(`${this.apiUrl}/requests/approved`);
   }
 
-  updateTravelRequestToBooked(requestUuid: string, files?: File[]): Observable<TravelRequest> {
-    const formData = new FormData();
-    
-    // Add files if provided
-    if (files && files.length > 0) {
-      files.forEach((file) => {
-        formData.append('files', file);
-      });
+  /**
+   * Create a booking for an approved travel request
+   * This replaces the deprecated PUT /requests/:uuid/book endpoint
+   * @param requestUuid UUID of the approved travel request
+   * @param bookingData Optional booking details (flight, hotel, cab, itineraryHtml)
+   * @param files Optional files to upload
+   */
+  createBookingForRequest(requestUuid: string, bookingData?: {
+    flightAirline?: string;
+    flightNumber?: string;
+    hotelName?: string;
+    hotelLocation?: string;
+    cabProvider?: string;
+    itineraryHtml?: string;
+  }, files?: File[]): Observable<BookingWithDetails> {
+    // Validate requestUuid
+    if (!requestUuid || requestUuid.trim() === '') {
+      throw new Error('requestUuid is required');
     }
-    
-    return this.http.put<TravelRequest>(`${this.apiUrl}/requests/${requestUuid}/book`, formData);
+
+    const payload: any = {
+      requestUuid: requestUuid.trim(),
+      itineraryHtml: bookingData?.itineraryHtml || ""
+    };
+
+    // Add optional booking details
+    if (bookingData?.flightAirline || bookingData?.flightNumber) {
+      payload.flightAirline = bookingData.flightAirline || "";
+      payload.flightNumber = bookingData.flightNumber || "";
+    }
+    if (bookingData?.hotelName || bookingData?.hotelLocation) {
+      payload.hotelName = bookingData.hotelName || "";
+      payload.hotelLocation = bookingData.hotelLocation || "";
+    }
+    if (bookingData?.cabProvider) {
+      payload.cabProvider = bookingData.cabProvider;
+    }
+
+    console.log('Creating booking with payload:', { requestUuid: payload.requestUuid, hasItineraryHtml: !!payload.itineraryHtml });
+
+    // Send as JSON (files can be uploaded separately via PUT /bookings/:uuid if needed)
+    return this.http.post<BookingWithDetails>(`${this.apiUrl}/bookings`, payload);
+  }
+
+  /**
+   * @deprecated Use createBookingForRequest instead
+   * This endpoint is kept for backward compatibility but may be removed
+   */
+  updateTravelRequestToBooked(requestUuid: string, files?: File[]): Observable<TravelRequest> {
+    // Use the new booking creation endpoint instead
+    return this.createBookingForRequest(requestUuid, {}, files).pipe(
+      map((booking) => {
+        // Helper function to convert Date or string to Date object
+        const toDate = (date: Date | string | undefined): Date => {
+          if (!date) return new Date();
+          if (date instanceof Date) {
+            return date;
+          }
+          return new Date(date);
+        };
+
+        // Helper function to convert string to TravelType enum
+        const toTravelType = (type: string | undefined): TravelType => {
+          if (type === 'INTERNATIONAL') return TravelType.INTERNATIONAL;
+          return TravelType.DOMESTIC;
+        };
+
+        // Return a TravelRequest object with proper types
+        const travelRequest: TravelRequest = {
+          uuid: booking.requestUuid,
+          employeeUuid: booking.travelRequest?.employeeId || "",
+          employeeName: booking.travelRequest?.employeeName || "",
+          from: booking.from || booking.travelRequest?.from || "",
+          to: booking.to || booking.travelRequest?.to || "",
+          travelType: toTravelType(booking.travelRequest?.travelType),
+          startDate: toDate(booking.travelRequest?.startDate),
+          endDate: toDate(booking.travelRequest?.endDate),
+          purpose: booking.travelRequest?.purpose || "",
+          status: RequestStatus.BOOKED,
+          createdAt: toDate(booking.createdAt),
+          updatedAt: toDate(booking.updatedAt)
+        };
+        return travelRequest;
+      })
+    );
   }
 
   createBooking(booking: BookingDetails): Observable<void> {

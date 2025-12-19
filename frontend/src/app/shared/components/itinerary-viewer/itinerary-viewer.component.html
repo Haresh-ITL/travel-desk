@@ -13,6 +13,17 @@
   </div>
 
   <div class="itinerary-body">
+    <!-- HTML Itinerary (if provided) -->
+    <div class="html-itinerary-section" *ngIf="data.itineraryHtml">
+      <div class="section-title">
+        <mat-icon>description</mat-icon>
+        <span>Travel Itinerary</span>
+      </div>
+      <div class="html-content" [innerHTML]="data.itineraryHtml"></div>
+    </div>
+
+    <!-- Structured Itinerary (if no HTML provided) -->
+    <ng-container *ngIf="!data.itineraryHtml">
     <!-- Quick Summary -->
     <div class="summary-section">
       <div class="summary-item">
@@ -298,5 +309,6 @@
         </div>
       </div>
     </div>
+    </ng-container>
   </div>
 </div>

@@ -83,10 +83,10 @@ const bookingSchema = new Schema<IBooking>({
       message: 'Confirmation file must be either a string or an object with fileName and base64'
     }
   }],
-  itineraryHtml: { type: String, required: true },
+  itineraryHtml: { type: String, required: false, default: "" },
   status: { type: String, required: true, default: "PENDING", enum: ["PENDING", "IN_PROGRESS", "CONFIRMED", "CANCELLED"] },
-  from: { type: String },
-  to: { type: String },
+  from: { type: String, required: true },
+  to: { type: String, required: true },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date },
   confirmedAt: { type: Date } // When booking was confirmed by travel admin

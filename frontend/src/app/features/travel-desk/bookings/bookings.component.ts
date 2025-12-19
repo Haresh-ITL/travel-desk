@@ -10,7 +10,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { TravelDeskService } from '../../../core/services/travel-desk.service';
-import { TravelRequest, RequestStatus, TransportMode } from '../../../shared/models';
+import { TravelRequest, RequestStatus, TransportMode, BookingWithDetails } from '../../../shared/models';
 
 @Component({
   selector: 'app-bookings',
@@ -110,28 +110,70 @@ export class BookingsComponent implements OnInit {
     if (!this.editingRequest) return;
 
     this.loading = true;
-    this.travelDeskService.updateTravelRequestToBooked(
+    // Use the new booking creation endpoint (POST /bookings)
+    this.travelDeskService.createBookingForRequest(
       this.editingRequest.uuid,
-      this.selectedFiles.length > 0 ? this.selectedFiles : undefined
+      {
+        itineraryHtml: "" // Can be updated later via PUT /bookings/:uuid
+      }
     ).subscribe({
-      next: (updatedRequest) => {
-        this.snackBar.open('Travel request saved as BOOKED successfully', 'Close', { duration: 3000 });
-        
-        // Update the request in the list
-        const index = this.approvedRequests.findIndex(r => r.uuid === updatedRequest.uuid);
-        if (index !== -1) {
-          this.approvedRequests[index] = updatedRequest;
-        }
+      next: (booking: BookingWithDetails) => {
+        this.snackBar.open('Booking created successfully. Request status updated to BOOKED.', 'Close', { duration: 3000 });
         
         // Remove from list since it's now BOOKED (no longer APPROVED)
-        this.approvedRequests = this.approvedRequests.filter(r => r.uuid !== updatedRequest.uuid);
+        this.approvedRequests = this.approvedRequests.filter(r => r.uuid !== this.editingRequest!.uuid);
         
         this.loading = false;
         this.cancelEdit();
+        
+        // Note: Files can be uploaded later via PUT /bookings/:uuid if needed
+        if (this.selectedFiles.length > 0) {
+          this.snackBar.open('Note: Files were not uploaded. You can add them later by updating the booking.', 'Close', { duration: 5000 });
+        }
       },
-      error: (error) => {
-        const errorMsg = error.error?.message || 'Failed to save travel request';
-        this.snackBar.open(errorMsg, 'Close', { duration: 5000 });
+      error: (error: any) => {
+        console.error('=== ERROR CREATING BOOKING ===');
+        console.error('Error object:', error);
+        console.error('Error status:', error?.status);
+        console.error('Error statusText:', error?.statusText);
+        console.error('Error error property:', error?.error);
+        console.error('Error error type:', typeof error?.error);
+        console.error('Error message:', error?.message);
+        console.error('Error url:', error?.url);
+        
+        // Try to get error message from response body
+        let errorMsg = 'Failed to create booking';
+        
+        try {
+          // Check if error.error exists and has a message
+          if (error?.error) {
+            if (typeof error.error === 'string') {
+              errorMsg = error.error;
+              console.log('Error message from string:', errorMsg);
+            } else if (error.error?.message) {
+              errorMsg = error.error.message;
+              console.log('Error message from error.error.message:', errorMsg);
+            } else if (error.error?.errors) {
+              errorMsg = 'Validation errors: ' + JSON.stringify(error.error.errors);
+              console.log('Error message from validation errors:', errorMsg);
+            } else {
+              // Try to stringify the whole error object
+              errorMsg = JSON.stringify(error.error);
+              console.log('Error message from stringified error:', errorMsg);
+            }
+          } else if (error?.message) {
+            errorMsg = error.message;
+            console.log('Error message from error.message:', errorMsg);
+          }
+        } catch (e) {
+          console.error('Error parsing error message:', e);
+          errorMsg = `HTTP ${error?.status || 'Unknown'} Error: ${error?.statusText || 'Unknown error'}`;
+        }
+        
+        console.error('Final error message to display:', errorMsg);
+        console.error('=== END ERROR ===');
+        
+        this.snackBar.open(errorMsg, 'Close', { duration: 7000, panelClass: ['error-snackbar'] });
         this.loading = false;
       }
     });
