@@ -310,5 +310,29 @@
       </div>
     </div>
     </ng-container>
+
+    <!-- Uploaded Files Section -->
+    <div class="section" *ngIf="allFiles.length > 0">
+      <div class="section-title">
+        <mat-icon>attach_file</mat-icon>
+        <span>Booking Documents & Attachments</span>
+      </div>
+      <div class="files-container">
+        <div class="files-grid">
+          <div class="file-card" *ngFor="let file of allFiles">
+            <div class="file-icon-wrapper">
+              <mat-icon [class]="getFileIcon(file.mimeType)">{{ getFileIcon(file.mimeType) }}</mat-icon>
+            </div>
+            <div class="file-info">
+              <div class="file-name">{{ file.fileName }}</div>
+              <div class="file-type" *ngIf="file.mimeType">{{ file.mimeType.split('/')[1]?.toUpperCase() || 'FILE' }}</div>
+            </div>
+            <button mat-icon-button color="primary" (click)="openFile(file)" matTooltip="Open File">
+              <mat-icon>open_in_new</mat-icon>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>

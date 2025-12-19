@@ -31,6 +31,7 @@ export class TravelDeskService {
     hotelLocation?: string;
     cabProvider?: string;
     itineraryHtml?: string;
+    confirmationFiles?: Array<{ fileName: string; base64: string; mimeType: string }>;
   }, files?: File[]): Observable<BookingWithDetails> {
     // Validate requestUuid
     if (!requestUuid || requestUuid.trim() === '') {
@@ -54,10 +55,19 @@ export class TravelDeskService {
     if (bookingData?.cabProvider) {
       payload.cabProvider = bookingData.cabProvider;
     }
+    
+    // Add confirmation files if provided
+    if (bookingData?.confirmationFiles && bookingData.confirmationFiles.length > 0) {
+      payload.confirmationFiles = bookingData.confirmationFiles;
+    }
 
-    console.log('Creating booking with payload:', { requestUuid: payload.requestUuid, hasItineraryHtml: !!payload.itineraryHtml });
+    console.log('Creating booking with payload:', { 
+      requestUuid: payload.requestUuid, 
+      hasItineraryHtml: !!payload.itineraryHtml,
+      confirmationFilesCount: payload.confirmationFiles?.length || 0
+    });
 
-    // Send as JSON (files can be uploaded separately via PUT /bookings/:uuid if needed)
+    // Send as JSON with confirmation files as base64
     return this.http.post<BookingWithDetails>(`${this.apiUrl}/bookings`, payload);
   }
 

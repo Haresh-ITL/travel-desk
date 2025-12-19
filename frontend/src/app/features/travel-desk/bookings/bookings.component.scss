@@ -51,7 +51,12 @@
 
       .mat-mdc-tab-body-wrapper {
         background: transparent;
-        padding: 0;
+        padding: 24px;
+        min-height: 400px;
+      }
+      
+      .mat-mdc-tab-body-content {
+        overflow: visible;
       }
     }
   }

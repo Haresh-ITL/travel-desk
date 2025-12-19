@@ -9,8 +9,12 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatTabsModule } from '@angular/material/tabs';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { TravelDeskService } from '../../../core/services/travel-desk.service';
-import { TravelRequest, RequestStatus, TransportMode, BookingWithDetails } from '../../../shared/models';
+import { TravelRequest, RequestStatus, TransportMode, BookingWithDetails, AllBookingsResponse } from '../../../shared/models';
+import { ItineraryViewerComponent } from '../../../shared/components/itinerary-viewer/itinerary-viewer.component';
+import { EmployeeService } from '../../../core/services/employee.service';
 
 @Component({
   selector: 'app-bookings',
@@ -25,7 +29,9 @@ import { TravelRequest, RequestStatus, TransportMode, BookingWithDetails } from 
     MatSnackBarModule,
     MatProgressSpinnerModule,
     MatChipsModule,
-    MatTooltipModule
+    MatTooltipModule,
+    MatTabsModule,
+    MatDialogModule
   ],
   templateUrl: './bookings.component.html',
   styleUrls: ['./bookings.component.scss']
@@ -33,9 +39,13 @@ import { TravelRequest, RequestStatus, TransportMode, BookingWithDetails } from 
 export class BookingsComponent implements OnInit {
   // Approved Travel Requests
   approvedRequests: TravelRequest[] = [];
+  bookedBookings: BookingWithDetails[] = [];
   displayedColumns: string[] = ['employeeName', 'from', 'to', 'travelType', 'startDate', 'endDate', 'status', 'actions'];
+  bookedColumns: string[] = ['employeeName', 'from', 'to', 'travelType', 'startDate', 'endDate', 'status', 'actions'];
   loading = false;
+  loadingBooked = false;
   error: string | null = null;
+  bookedError: string | null = null;
 
   // Edit Travel Request
   editingRequest: TravelRequest | null = null;
@@ -46,11 +56,14 @@ export class BookingsComponent implements OnInit {
 
   constructor(
     private travelDeskService: TravelDeskService,
-    private snackBar: MatSnackBar
+    private employeeService: EmployeeService,
+    private snackBar: MatSnackBar,
+    private dialog: MatDialog
   ) {}
 
   ngOnInit(): void {
     this.loadApprovedRequests();
+    this.loadBookedRequests();
   }
 
   loadApprovedRequests(): void {
@@ -66,6 +79,31 @@ export class BookingsComponent implements OnInit {
         this.error = 'Failed to load approved travel requests';
         this.loading = false;
         this.snackBar.open(this.error, 'Close', { duration: 5000 });
+      }
+    });
+  }
+
+  loadBookedRequests(): void {
+    this.loadingBooked = true;
+    this.bookedError = null;
+    // Get all bookings without status filter, then filter by travel request status BOOKED
+    this.travelDeskService.getAllBookings({
+      limit: 1000,
+      page: 1
+    }).subscribe({
+      next: (response: AllBookingsResponse) => {
+        // Filter bookings where travel request status is BOOKED
+        this.bookedBookings = response.bookings.filter(booking => 
+          booking.travelRequest?.status === RequestStatus.BOOKED
+        );
+        console.log('Loaded booked bookings:', this.bookedBookings.length);
+        this.loadingBooked = false;
+      },
+      error: (error) => {
+        console.error('Error loading booked requests:', error);
+        this.bookedError = 'Failed to load booked travel requests';
+        this.loadingBooked = false;
+        this.snackBar.open(this.bookedError, 'Close', { duration: 5000 });
       }
     });
   }
@@ -106,15 +144,36 @@ export class BookingsComponent implements OnInit {
     this.editingRequest = { ...request };
   }
 
-  saveRequest(): void {
+  async saveRequest(): Promise<void> {
     if (!this.editingRequest) return;
 
     this.loading = true;
+    
+    // Convert files to base64 if any files are selected
+    const confirmationFiles: Array<{ fileName: string; base64: string; mimeType: string }> = [];
+    
+    if (this.selectedFiles.length > 0) {
+      for (const file of this.selectedFiles) {
+        try {
+          const base64 = await this.fileToBase64(file);
+          confirmationFiles.push({
+            fileName: file.name,
+            base64: base64,
+            mimeType: file.type || 'application/octet-stream'
+          });
+        } catch (error) {
+          console.error('Error converting file to base64:', error);
+          this.snackBar.open(`Error processing file ${file.name}`, 'Close', { duration: 3000 });
+        }
+      }
+    }
+    
     // Use the new booking creation endpoint (POST /bookings)
     this.travelDeskService.createBookingForRequest(
       this.editingRequest.uuid,
       {
-        itineraryHtml: "" // Can be updated later via PUT /bookings/:uuid
+        itineraryHtml: "", // Can be updated later via PUT /bookings/:uuid
+        confirmationFiles: confirmationFiles
       }
     ).subscribe({
       next: (booking: BookingWithDetails) => {
@@ -126,10 +185,8 @@ export class BookingsComponent implements OnInit {
         this.loading = false;
         this.cancelEdit();
         
-        // Note: Files can be uploaded later via PUT /bookings/:uuid if needed
-        if (this.selectedFiles.length > 0) {
-          this.snackBar.open('Note: Files were not uploaded. You can add them later by updating the booking.', 'Close', { duration: 5000 });
-        }
+        // Reload booked requests to show the new booking
+        this.loadBookedRequests();
       },
       error: (error: any) => {
         console.error('=== ERROR CREATING BOOKING ===');
@@ -215,6 +272,84 @@ export class BookingsComponent implements OnInit {
 
   getFileName(file: File): string {
     return file.name;
+  }
+
+  private fileToBase64(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => {
+        const result = reader.result as string;
+        // Remove data URL prefix (e.g., "data:image/png;base64,")
+        const base64 = result.split(',')[1];
+        resolve(base64);
+      };
+      reader.onerror = (error) => reject(error);
+    });
+  }
+
+  viewItinerary(booking: BookingWithDetails): void {
+    if (!booking.travelRequest) {
+      this.snackBar.open('Travel request information not available', 'Close', { 
+        duration: 3000,
+        panelClass: ['error-snackbar'] 
+      });
+      return;
+    }
+
+    const request = booking.travelRequest;
+    
+    // Build itinerary data from booking
+    const itineraryData = {
+      employeeName: request.employeeName || 'Employee',
+      travelRequestId: request.uuid || booking.requestUuid,
+      purpose: request.purpose || '',
+      travelType: request.travelType,
+      startDate: request.startDate ? new Date(request.startDate) : new Date(),
+      endDate: request.endDate ? new Date(request.endDate) : new Date(),
+      from: booking.from || request.from || '',
+      to: booking.to || request.to || '',
+      // Parse flight details
+      outboundJourney: booking.flight ? {
+        transportType: 'FLIGHT' as const,
+        provider: typeof booking.flight === 'string' ? booking.flight.split(' ')[0] : '',
+        number: typeof booking.flight === 'string' ? booking.flight.split(' ').slice(1).join(' ') : '',
+        from: booking.from || request.from || '',
+        to: booking.to || request.to || '',
+        departureDateTime: request.startDate ? new Date(request.startDate) : new Date(),
+        arrivalDateTime: request.startDate ? new Date(request.startDate) : new Date()
+      } : undefined,
+      // Parse hotel details
+      hotelDetails: booking.hotel ? {
+        name: typeof booking.hotel === 'string' ? booking.hotel : (booking.hotel as any).name || '',
+        address: typeof booking.hotel === 'string' ? '' : (booking.hotel as any).location || '',
+        checkinDateTime: request.startDate ? new Date(request.startDate) : new Date(),
+        checkoutDateTime: request.endDate ? new Date(request.endDate) : new Date(),
+        contactNumber: typeof booking.hotel === 'object' ? (booking.hotel as any).phoneNumber : undefined,
+        roomType: typeof booking.hotel === 'object' ? (booking.hotel as any).roomNumber : undefined
+      } : undefined,
+      // Parse cab details
+      cabDetails: booking.cab ? {
+        provider: typeof booking.cab === 'string' ? booking.cab : (booking.cab as any).name || '',
+        pickupLocation: booking.from || request.from || '',
+        dropLocation: booking.to || request.to || '',
+        pickupDateTime: request.startDate ? new Date(request.startDate) : new Date(),
+        driverName: typeof booking.cab === 'object' ? (booking.cab as any).driverName : undefined,
+        driverContact: typeof booking.cab === 'object' ? (booking.cab as any).phoneNumber : undefined
+      } : undefined,
+      // Include confirmation files
+      confirmationFiles: booking.confirmationFiles || [],
+      // Include travel request file paths
+      filePaths: (request as any).filePaths || []
+    };
+
+    this.dialog.open(ItineraryViewerComponent, {
+      width: '1000px',
+      maxWidth: '100vw',
+      maxHeight: '100vh',
+      panelClass: 'no-padding-dialog',
+      data: itineraryData
+    });
   }
 
 }

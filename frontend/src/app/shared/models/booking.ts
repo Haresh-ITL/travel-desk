@@ -91,6 +91,7 @@ export interface BookingWithDetails {
     purpose: string;
     status: string;
     createdAt: string | Date;
+    filePaths?: string[];
   };
 }
 

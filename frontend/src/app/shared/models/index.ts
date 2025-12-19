@@ -204,6 +204,15 @@ export interface ItineraryData {
   from?: string;
   to?: string;
   itineraryHtml?: string;
+  
+  // File attachments
+  confirmationFiles?: Array<{
+    fileName: string;
+    base64?: string;
+    mimeType?: string;
+    url?: string;
+  }>;
+  filePaths?: string[]; // URLs to uploaded files
 }
 
 // Re-export booking-related types from booking.ts

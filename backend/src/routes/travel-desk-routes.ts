@@ -123,7 +123,7 @@ travelDeskRouter.put(
           hotel: undefined,
           cab: undefined,
           confirmationFiles: [],
-          itineraryHtml: "",
+          itineraryHtml: "", // Empty - generate on demand
           status: "PENDING" as BookingStatus,
           from: travelRequest.from,
           to: travelRequest.to
@@ -183,7 +183,8 @@ travelDeskRouter.post(
         itineraryHtml,
         flightConfirmationUrl,
         hotelConfirmationUrl,
-        cabConfirmationUrl
+        cabConfirmationUrl,
+        confirmationFiles // Array of { fileName, base64, mimeType }
       } = req.body || {};
       
       // Use requestUuid or travelRequestId (support both for compatibility)
@@ -268,27 +269,6 @@ travelDeskRouter.post(
         itineraryHtml: itineraryHtml || ""
       });
 
-      // Generate beautiful itinerary HTML template
-      const employeeForItinerary = await User.findOne({ uuid: travelRequest.employeeId }).lean();
-      let finalItineraryHtml = itineraryHtml || "";
-      
-      // If no HTML provided, generate a beautiful template from booking details
-      if (!finalItineraryHtml || finalItineraryHtml.trim() === "") {
-        finalItineraryHtml = generateItineraryHTML({
-          employeeName: employeeForItinerary?.name || "Employee",
-          requestUuid: finalRequestUuid,
-          from: travelRequest.from,
-          to: travelRequest.to,
-          travelType: travelRequest.travelType as 'DOMESTIC' | 'INTERNATIONAL',
-          startDate: travelRequest.startDate,
-          endDate: travelRequest.endDate,
-          purpose: travelRequest.purpose,
-          flight: flightValue,
-          hotel: hotelValue,
-          cab: cabValue
-        });
-      }
-      
       // Ensure from and to are always provided (required for booking)
       // Check if travelRequest has from/to values (they should be required in schema)
       const bookingFrom = (travelRequest.from && String(travelRequest.from).trim()) || null;
@@ -314,19 +294,43 @@ travelDeskRouter.post(
       
       console.log('Creating booking with locations:', { from: bookingFrom, to: bookingTo });
       
+      // Process confirmation files if provided
+      let processedConfirmationFiles: Array<{ fileName: string; base64: string; mimeType?: string }> = [];
+      if (confirmationFiles && Array.isArray(confirmationFiles) && confirmationFiles.length > 0) {
+        processedConfirmationFiles = confirmationFiles.map((file: any) => {
+          // Ensure base64 is a string and not double-encoded
+          let base64Data = file.base64;
+          if (typeof base64Data !== 'string') {
+            base64Data = String(base64Data);
+          }
+          // Remove any data URL prefix if present
+          if (base64Data.includes(',')) {
+            base64Data = base64Data.split(',')[1];
+          }
+          
+          return {
+            fileName: file.fileName || 'unknown',
+            base64: base64Data,
+            mimeType: file.mimeType || 'application/octet-stream'
+          };
+        });
+        console.log('Processing confirmation files:', processedConfirmationFiles.length);
+      }
+      
+      // Don't save itineraryHtml - generate it on demand instead
       const booking = await Booking.create({
         uuid: uuid(),
         requestUuid: finalRequestUuid,
         flight: flightValue,
         hotel: hotelValue,
         cab: cabValue,
-        confirmationFiles: [],
-        itineraryHtml: finalItineraryHtml,
+        confirmationFiles: processedConfirmationFiles,
+        itineraryHtml: "", // Empty - generate on demand
         status: "PENDING" as BookingStatus,
         from: bookingFrom,
         to: bookingTo
       });
-      console.log('Booking created successfully:', booking.uuid);
+      console.log('Booking created successfully:', booking.uuid, 'with', processedConfirmationFiles.length, 'confirmation files');
 
       // Update travel request status to BOOKED only after successful booking creation
       travelRequest.status = "BOOKED";
@@ -345,8 +349,8 @@ travelDeskRouter.post(
         flight: booking.flight,
         hotel: booking.hotel,
         cab: booking.cab,
-        itineraryHtml: booking.itineraryHtml,
-        confirmationFiles: booking.confirmationFiles,
+        itineraryHtml: "", // Empty - generate on demand
+        confirmationFiles: booking.confirmationFiles || [],
         status: booking.status,
         from: booking.from,
         to: booking.to,
@@ -646,29 +650,9 @@ travelDeskRouter.put(
         }
       }
       
-      // Regenerate itinerary HTML if booking details changed or if explicitly provided
-      if (itineraryHtml !== undefined) {
-        booking.itineraryHtml = itineraryHtml;
-      } else if (flight !== undefined || hotel !== undefined || cab !== undefined) {
-        // Auto-regenerate itinerary when booking details are updated
-        const travelRequest = await TravelRequest.findOne({ uuid: booking.requestUuid });
-        if (travelRequest) {
-          const employee = await User.findOne({ uuid: travelRequest.employeeId }).lean();
-          booking.itineraryHtml = generateItineraryHTML({
-            employeeName: employee?.name || "Employee",
-            requestUuid: booking.requestUuid,
-            from: booking.from || travelRequest.from,
-            to: booking.to || travelRequest.to,
-            travelType: travelRequest.travelType as 'DOMESTIC' | 'INTERNATIONAL',
-            startDate: travelRequest.startDate,
-            endDate: travelRequest.endDate,
-            purpose: travelRequest.purpose,
-            flight: booking.flight,
-            hotel: booking.hotel,
-            cab: booking.cab
-          });
-        }
-      }
+      // Don't save itineraryHtml - generate on demand instead
+      // Remove any existing itineraryHtml
+      booking.itineraryHtml = "";
       // Handle base64 file uploads if provided
       if (confirmationFiles && Array.isArray(confirmationFiles) && confirmationFiles.length > 0) {
         // Store files as objects with fileName and base64 (base64 is already encoded, store as-is)
@@ -713,7 +697,7 @@ travelDeskRouter.put(
         flight: booking.flight,
         hotel: booking.hotel,
         cab: booking.cab,
-        itineraryHtml: booking.itineraryHtml,
+        itineraryHtml: "", // Empty - generate on demand
         confirmationFiles: booking.confirmationFiles,
         status: booking.status,
         from: booking.from,
