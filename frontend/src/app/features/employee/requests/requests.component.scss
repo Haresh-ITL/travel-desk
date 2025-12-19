@@ -145,6 +145,11 @@
   border: 1px solid var(--border-color);
   overflow: hidden;
   box-shadow: var(--shadow-md);
+
+  mat-paginator {
+    background: var(--bg-secondary);
+    border-top: 1px solid var(--border-color);
+  }
 }
 
 .table-container {

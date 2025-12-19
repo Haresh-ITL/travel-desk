@@ -243,6 +243,74 @@ body {
   .mat-mdc-input-element {
     color: var(--text-primary) !important;
   }
+
+  // Remove focus overlay that causes blue line on left side
+  .mat-mdc-form-field-focus-overlay {
+    background-color: transparent !important;
+    display: none !important;
+    opacity: 0 !important;
+  }
+
+  // Remove any borders or indicators that might cause blue line
+  .mat-mdc-form-field-flex {
+    border-left: none !important;
+    border-right: none !important;
+    background: none !important;
+    
+    &::before,
+    &::after {
+      display: none !important;
+      content: none !important;
+      background: none !important;
+      border: none !important;
+    }
+  }
+
+  .mat-mdc-form-field-icon-prefix {
+    position: relative;
+    border-left: none !important;
+    border-right: none !important;
+    background: none !important;
+    
+    &::before,
+    &::after {
+      display: none !important;
+      content: none !important;
+      background: none !important;
+      border: none !important;
+    }
+  }
+
+  .mat-mdc-form-field-infix {
+    border-left: none !important;
+    border-right: none !important;
+    
+    &::before,
+    &::after {
+      display: none !important;
+      content: none !important;
+      background: none !important;
+      border: none !important;
+    }
+  }
+
+  // Remove blue line on focus state
+  &.mat-focused {
+    .mat-mdc-form-field-flex {
+      border-left: none !important;
+      background: none !important;
+    }
+
+    .mat-mdc-form-field-icon-prefix {
+      border-left: none !important;
+      background: none !important;
+    }
+
+    .mat-mdc-form-field-infix {
+      border-left: none !important;
+      background: none !important;
+    }
+  }
 }
 
 .mat-mdc-table {

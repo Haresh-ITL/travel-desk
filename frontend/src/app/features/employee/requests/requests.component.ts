@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatTableModule, MatTableDataSource } from '@angular/material/table';
 import { MatSortModule, MatSort } from '@angular/material/sort';
+import { MatPaginatorModule, MatPaginator } from '@angular/material/paginator';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatChipsModule } from '@angular/material/chips';
@@ -25,6 +26,7 @@ import { TravelRequestDialogComponent } from './travel-request-dialog.component'
     FormsModule,
     MatTableModule,
     MatSortModule,
+    MatPaginatorModule,
     MatButtonModule,
     MatIconModule,
     MatChipsModule,
@@ -40,6 +42,7 @@ import { TravelRequestDialogComponent } from './travel-request-dialog.component'
 })
 export class RequestsComponent implements OnInit, AfterViewInit {
   @ViewChild(MatSort) sort!: MatSort;
+  @ViewChild(MatPaginator) paginator!: MatPaginator;
   
   requests: TravelRequest[] = [];
   dataSource = new MatTableDataSource<TravelRequest>([]);
@@ -105,6 +108,10 @@ export class RequestsComponent implements OnInit, AfterViewInit {
             return item[property as keyof TravelRequest] as string;
         }
       };
+    }
+    
+    if (this.paginator) {
+      this.dataSource.paginator = this.paginator;
     }
   }
 

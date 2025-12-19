@@ -281,6 +281,85 @@
       .mat-mdc-text-field-wrapper {
         background-color: var(--bg-secondary);
         border-radius: var(--radius-md);
+        outline: none !important;
+      }
+
+      .mat-mdc-form-field-focus-overlay {
+        background-color: transparent !important;
+        display: none !important;
+        opacity: 0 !important;
+      }
+
+      // Remove Material Design ripple effects
+      .mat-ripple-element,
+      .mdc-ripple-surface,
+      .mdc-ripple-upgraded {
+        display: none !important;
+        opacity: 0 !important;
+      }
+
+      // Remove any borders or indicators on flex container
+      .mat-mdc-form-field-flex {
+        border-left: none !important;
+        border-right: none !important;
+        background: none !important;
+        outline: none !important;
+        box-shadow: none !important;
+        
+        &::before,
+        &::after {
+          display: none !important;
+          content: none !important;
+          background: none !important;
+          border: none !important;
+          outline: none !important;
+          box-shadow: none !important;
+        }
+      }
+
+      // Remove any indicators on icon prefix
+      .mat-mdc-form-field-icon-prefix {
+        color: var(--primary-blue);
+        position: relative;
+        border-left: none !important;
+        border-right: none !important;
+        background: none !important;
+        outline: none !important;
+        box-shadow: none !important;
+        
+        &::before,
+        &::after {
+          display: none !important;
+          content: none !important;
+          background: none !important;
+          border: none !important;
+          outline: none !important;
+          box-shadow: none !important;
+        }
+
+        mat-icon {
+          border-left: none !important;
+          outline: none !important;
+          box-shadow: none !important;
+        }
+      }
+
+      // Remove any indicators on infix
+      .mat-mdc-form-field-infix {
+        border-left: none !important;
+        border-right: none !important;
+        outline: none !important;
+        box-shadow: none !important;
+        
+        &::before,
+        &::after {
+          display: none !important;
+          content: none !important;
+          background: none !important;
+          border: none !important;
+          outline: none !important;
+          box-shadow: none !important;
+        }
       }
       
       .mdc-notched-outline__leading,
@@ -296,10 +375,78 @@
           border-color: var(--primary-blue);
           border-width: 2px;
         }
-      }
-      
-      .mat-mdc-form-field-icon-prefix {
-        color: var(--primary-blue);
+
+        // Ensure no blue line on focus
+        .mat-mdc-text-field-wrapper {
+          outline: none !important;
+          
+          &::before,
+          &::after {
+            display: none !important;
+            content: none !important;
+            background: none !important;
+            border: none !important;
+            outline: none !important;
+            box-shadow: none !important;
+          }
+        }
+
+        .mat-mdc-form-field-flex {
+          border-left: none !important;
+          background: none !important;
+          box-shadow: none !important;
+          outline: none !important;
+          
+          &::before,
+          &::after {
+            display: none !important;
+            content: none !important;
+            background: none !important;
+            border: none !important;
+            outline: none !important;
+            box-shadow: none !important;
+          }
+        }
+
+        .mat-mdc-form-field-icon-prefix {
+          border-left: none !important;
+          background: none !important;
+          box-shadow: none !important;
+          outline: none !important;
+          
+          &::before,
+          &::after {
+            display: none !important;
+            content: none !important;
+            background: none !important;
+            border: none !important;
+            outline: none !important;
+            box-shadow: none !important;
+          }
+
+          mat-icon {
+            border-left: none !important;
+            outline: none !important;
+            box-shadow: none !important;
+          }
+        }
+
+        .mat-mdc-form-field-infix {
+          border-left: none !important;
+          background: none !important;
+          box-shadow: none !important;
+          outline: none !important;
+          
+          &::before,
+          &::after {
+            display: none !important;
+            content: none !important;
+            background: none !important;
+            border: none !important;
+            outline: none !important;
+            box-shadow: none !important;
+          }
+        }
       }
     }
   }
@@ -308,6 +455,84 @@
 // Form fields
 .full-width {
   width: 100%;
+}
+
+// Aggressive fix for blue line issue - target Material Design classes directly
+::ng-deep {
+  .mdc-text-field {
+    .mdc-text-field__ripple {
+      display: none !important;
+      opacity: 0 !important;
+    }
+  }
+
+  .mat-mdc-form-field {
+    // Disable ripple effects completely
+    .mat-ripple-element,
+    .mdc-ripple-surface,
+    .mdc-ripple-upgraded,
+    .mdc-text-field__ripple {
+      display: none !important;
+      opacity: 0 !important;
+      visibility: hidden !important;
+    }
+
+    // Target the flex container specifically
+    .mat-mdc-form-field-flex {
+      border-left: 0 !important;
+      border-right: 0 !important;
+      outline: none !important;
+      box-shadow: none !important;
+      background: transparent !important;
+      
+      // Remove any visual indicators
+      &::before,
+      &::after {
+        all: unset !important;
+      }
+    }
+
+    // Target icon prefix specifically
+    .mat-mdc-form-field-icon-prefix {
+      border-left: 0 !important;
+      border-right: 0 !important;
+      outline: none !important;
+      box-shadow: none !important;
+      background: transparent !important;
+      margin-left: 0 !important;
+      padding-left: 0 !important;
+      
+      &::before,
+      &::after {
+        all: unset !important;
+      }
+
+      mat-icon {
+        border-left: 0 !important;
+        outline: none !important;
+        box-shadow: none !important;
+      }
+    }
+
+    // When focused, ensure no blue line
+    &.mat-focused {
+      .mat-mdc-form-field-flex {
+        border-left: 0 !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        outline: none !important;
+      }
+
+      .mat-mdc-form-field-icon-prefix {
+        border-left: 0 !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        outline: none !important;
+        margin-left: 0 !important;
+        padding-left: 0 !important;
+      }
+    }
+  }
 }
 
 .animated-field {
@@ -326,8 +551,62 @@
         box-shadow: 0 0 0 3px rgba(77, 163, 255, 0.1);
       }
 
+      // Remove all focus overlays and indicators
       .mat-mdc-form-field-focus-overlay {
-        background-color: transparent;
+        background-color: transparent !important;
+        display: none !important;
+        opacity: 0 !important;
+      }
+
+      // Remove any borders or lines on the flex container
+      .mat-mdc-form-field-flex {
+        position: relative;
+        border-left: none !important;
+        border-right: none !important;
+        
+        &::before,
+        &::after {
+          display: none !important;
+          content: none !important;
+          background: none !important;
+          border: none !important;
+        }
+      }
+
+      // Remove any indicators on the icon prefix container
+      .mat-mdc-form-field-icon-prefix {
+        color: var(--accent-blue);
+        margin-right: var(--spacing-sm);
+        transition: color var(--transition-base);
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+        position: relative;
+        border-left: none !important;
+        border-right: none !important;
+        background: none !important;
+        
+        &::before,
+        &::after {
+          display: none !important;
+          content: none !important;
+          background: none !important;
+          border: none !important;
+        }
+      }
+
+      // Remove any blue indicators on the infix container
+      .mat-mdc-form-field-infix {
+        border-left: none !important;
+        border-right: none !important;
+        
+        &::before,
+        &::after {
+          display: none !important;
+          content: none !important;
+          background: none !important;
+          border: none !important;
+        }
       }
 
       .mdc-notched-outline__leading,
@@ -337,24 +616,24 @@
         transition: border-color var(--transition-base);
       }
 
-      &.mat-focused .mdc-notched-outline__leading,
-      &.mat-focused .mdc-notched-outline__notch,
-      &.mat-focused .mdc-notched-outline__trailing {
-        border-color: var(--accent-blue);
-        border-width: 2px;
-      }
+      &.mat-focused {
+        .mdc-notched-outline__leading,
+        .mdc-notched-outline__notch,
+        .mdc-notched-outline__trailing {
+          border-color: var(--accent-blue);
+          border-width: 2px;
+        }
 
-      .mat-mdc-form-field-icon-prefix {
-        color: var(--accent-blue);
-        margin-right: var(--spacing-sm);
-        transition: color var(--transition-base);
-        font-size: 20px;
-        width: 20px;
-        height: 20px;
-      }
+        // Ensure no blue line appears on focus
+        .mat-mdc-form-field-flex {
+          border-left: none !important;
+          background: none !important;
+        }
 
-      &.mat-focused .mat-mdc-form-field-icon-prefix {
-        color: var(--accent-blue);
+        .mat-mdc-form-field-icon-prefix {
+          border-left: none !important;
+          background: none !important;
+        }
       }
     }
 
