@@ -10,6 +10,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule, provideNativeDateAdapter } from '@angular/material/core';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatRadioModule } from '@angular/material/radio';
 import { TravelType, TransportMode, User } from '../../../shared/models';
 import { EmployeeService } from '../../../core/services/employee.service';
 import { ManagerService } from '../../../core/services/manager.service';
@@ -30,7 +32,9 @@ import { UserRole } from '../../../shared/models';
     MatIconModule,
     MatDatepickerModule,
     MatNativeDateModule,
-    MatProgressSpinnerModule
+    MatProgressSpinnerModule,
+    MatCheckboxModule,
+    MatRadioModule
   ],
   providers: [provideNativeDateAdapter()],
   templateUrl: './travel-request-dialog.component.html',
@@ -61,7 +65,15 @@ export class TravelRequestDialogComponent implements OnInit {
       startDate: ['', Validators.required],
       endDate: ['', Validators.required],
       purpose: ['', [Validators.required, Validators.minLength(10)]],
-      managerId: [''] // Will be conditionally required based on managers availability
+      managerId: [''], // Will be conditionally required based on managers availability
+      isDisabled: [false],
+      disabilityDescription: [''],
+      foodPreference: [''],
+      specificFoodPreferences: [''],
+      localTransportRequired: [false],
+      numberOfSeats: [1, [Validators.min(1)]],
+      hotelStarRating: [''],
+      numberOfRooms: [1, [Validators.required, Validators.min(1)]]
     });
   }
 
@@ -100,6 +112,31 @@ export class TravelRequestDialogComponent implements OnInit {
     this.requestForm.get('startDate')?.valueChanges.subscribe(() => {
       this.requestForm.get('endDate')?.updateValueAndValidity();
     });
+    
+    // Make disability description required if isDisabled is true
+    this.requestForm.get('isDisabled')?.valueChanges.subscribe((isDisabled) => {
+      const disabilityDescControl = this.requestForm.get('disabilityDescription');
+      if (isDisabled) {
+        disabilityDescControl?.setValidators([Validators.required]);
+      } else {
+        disabilityDescControl?.clearValidators();
+        disabilityDescControl?.setValue('');
+      }
+      disabilityDescControl?.updateValueAndValidity();
+    });
+    
+    // Make number of seats required if localTransportRequired is true
+    this.requestForm.get('localTransportRequired')?.valueChanges.subscribe((required) => {
+      const numberOfSeatsControl = this.requestForm.get('numberOfSeats');
+      if (required) {
+        numberOfSeatsControl?.setValidators([Validators.required, Validators.min(1)]);
+      } else {
+        numberOfSeatsControl?.clearValidators();
+        numberOfSeatsControl?.setValue(1);
+      }
+      numberOfSeatsControl?.updateValueAndValidity();
+    });
+    
   }
 
   loadManagers(): void {
@@ -184,6 +221,14 @@ export class TravelRequestDialogComponent implements OnInit {
     
     formData.append('purpose', this.requestForm.get('purpose')?.value || '');
     formData.append('managerId', this.requestForm.get('managerId')?.value || '');
+    formData.append('isDisabled', this.requestForm.get('isDisabled')?.value ? 'true' : 'false');
+    formData.append('disabilityDescription', this.requestForm.get('disabilityDescription')?.value || '');
+    formData.append('foodPreference', this.requestForm.get('foodPreference')?.value || '');
+    formData.append('specificFoodPreferences', this.requestForm.get('specificFoodPreferences')?.value || '');
+    formData.append('localTransportRequired', this.requestForm.get('localTransportRequired')?.value ? 'true' : 'false');
+    formData.append('numberOfSeats', this.requestForm.get('numberOfSeats')?.value?.toString() || '1');
+    formData.append('hotelStarRating', this.requestForm.get('hotelStarRating')?.value || '');
+    formData.append('numberOfRooms', this.requestForm.get('numberOfRooms')?.value?.toString() || '1');
     // No files appended - documents will be automatically retrieved from profile
 
     // Use appropriate service based on user role

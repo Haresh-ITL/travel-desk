@@ -13,7 +13,13 @@ export class ManagerService {
   constructor(private http: HttpClient) {}
 
   getRequests(): Observable<TravelRequest[]> {
+    // Returns manager's own requests (where they are the employee)
     return this.http.get<TravelRequest[]>(`${this.apiUrl}/requests`);
+  }
+
+  getTeamRequests(): Observable<TravelRequest[]> {
+    // Returns employee requests (where manager is the primary manager)
+    return this.http.get<TravelRequest[]>(`${this.apiUrl}/team-requests`);
   }
 
   getPendingRequests(): Observable<TravelRequest[]> {

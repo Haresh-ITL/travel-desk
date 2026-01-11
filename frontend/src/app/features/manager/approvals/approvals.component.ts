@@ -94,13 +94,18 @@ export class ApprovalsComponent implements OnInit, AfterViewInit {
   }
 
   loadRequests(): void {
-    this.managerService.getRequests().subscribe({
+    // Get employee requests (where manager is the primary manager)
+    this.managerService.getTeamRequests().subscribe({
       next: (requests) => {
-        this.requests = requests;
+        this.requests = requests || [];
         this.calculateStatusCounts();
         this.applyFilters();
       },
-      error: () => {
+      error: (error) => {
+        console.error('Error loading team requests:', error);
+        this.requests = [];
+        this.calculateStatusCounts();
+        this.applyFilters();
         this.snackBar.open('Failed to load requests', 'Close', { duration: 3000 });
       }
     });
@@ -243,10 +248,62 @@ export class ApprovalsComponent implements OnInit, AfterViewInit {
 
   getTransportIcon(mode?: TransportMode): string {
     if (!mode) return 'flight';
-    return mode === TransportMode.FLIGHT ? 'flight' : 'train';
+    switch (mode) {
+      case TransportMode.FLIGHT:
+        return 'flight';
+      case TransportMode.TRAIN:
+        return 'train';
+      case TransportMode.BUS:
+        return 'directions_bus';
+      default:
+        return 'flight';
+    }
   }
 
   formatDate(date: Date): string {
     return new Date(date).toLocaleDateString();
+  }
+
+  isTrue(value: any): boolean {
+    return value === true || String(value) === 'true';
+  }
+
+  hasPreferences(request: TravelRequest): boolean {
+    if (!request) return false;
+    // Check if any preference field is defined (more lenient check)
+    const hasAnyPreference = 
+      request.isDisabled !== undefined ||
+      request.disabilityDescription !== undefined ||
+      request.foodPreference !== undefined ||
+      request.specificFoodPreferences !== undefined ||
+      request.localTransportRequired !== undefined ||
+      request.driverPhoneNumber !== undefined ||
+      request.carModel !== undefined ||
+      request.carColor !== undefined ||
+      request.numberPlate !== undefined ||
+      request.hotelStarRating !== undefined ||
+      request.numberOfRooms !== undefined;
+    
+    if (!hasAnyPreference) return false;
+    
+    // Now check if any has a meaningful value
+    const hasHotelPref = request.hotelStarRating && 
+                         String(request.hotelStarRating).trim() && 
+                         String(request.hotelStarRating).trim() !== 'No Preference';
+    const isDisabled = request.isDisabled === true || String(request.isDisabled) === 'true';
+    const localTransportReq = request.localTransportRequired === true || String(request.localTransportRequired) === 'true';
+    return !!(
+      isDisabled ||
+      (request.disabilityDescription && String(request.disabilityDescription).trim()) ||
+      request.foodPreference ||
+      (request.specificFoodPreferences && String(request.specificFoodPreferences).trim()) ||
+      localTransportReq ||
+      (request.driverPhoneNumber && String(request.driverPhoneNumber).trim()) ||
+      (request.carModel && String(request.carModel).trim()) ||
+      (request.carColor && String(request.carColor).trim()) ||
+      (request.numberPlate && String(request.numberPlate).trim()) ||
+      hasHotelPref ||
+      (request.numberOfRooms !== undefined && request.numberOfRooms !== null && Number(request.numberOfRooms) > 0)
+    );
   }
 }

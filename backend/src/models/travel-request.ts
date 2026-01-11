@@ -1,7 +1,7 @@
 import { Schema, model } from "mongoose";
 
 export type TravelStatus = "PENDING" | "APPROVED" | "BOOKED" | "REJECTED";
-export type TransportMode = "FLIGHT" | "TRAIN";
+export type TransportMode = "FLIGHT" | "TRAIN" | "BUS";
 
 export interface ITravelRequest {
   uuid: string;
@@ -19,6 +19,18 @@ export interface ITravelRequest {
   passportUrl?: string;
   status: TravelStatus;
   managerComment?: string;
+  isDisabled?: boolean;
+  disabilityDescription?: string;
+  foodPreference?: "VEG" | "NON_VEG";
+  specificFoodPreferences?: string;
+  localTransportRequired?: boolean;
+  numberOfSeats?: number;
+  driverPhoneNumber?: string;
+  carModel?: string;
+  carColor?: string;
+  numberPlate?: string;
+  hotelStarRating?: string;
+  numberOfRooms?: number;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -38,7 +50,19 @@ const travelRequestSchema = new Schema<ITravelRequest>({
   idProofUrl: { type: String },
   passportUrl: { type: String },
   status: { type: String, required: true, default: "PENDING" },
-  managerComment: { type: String }
+  managerComment: { type: String },
+  isDisabled: { type: Boolean, default: false },
+  disabilityDescription: { type: String },
+  foodPreference: { type: String },
+  specificFoodPreferences: { type: String },
+  localTransportRequired: { type: Boolean, default: false },
+  numberOfSeats: { type: Number, default: 1 },
+  driverPhoneNumber: { type: String },
+  carModel: { type: String },
+  carColor: { type: String },
+  numberPlate: { type: String },
+  hotelStarRating: { type: String },
+  numberOfRooms: { type: Number, default: 1 }
 }, {
   timestamps: true
 });

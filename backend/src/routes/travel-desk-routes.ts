@@ -43,6 +43,18 @@ async function formatTravelRequest(tr: any) {
     managerComment: tr.managerComment,
     idProofUrl: tr.idProofUrl,
     passportUrl: tr.passportUrl,
+    isDisabled: tr.isDisabled,
+    disabilityDescription: tr.disabilityDescription,
+    foodPreference: tr.foodPreference,
+    specificFoodPreferences: tr.specificFoodPreferences,
+    localTransportRequired: tr.localTransportRequired,
+    numberOfSeats: tr.numberOfSeats,
+    driverPhoneNumber: tr.driverPhoneNumber,
+    carModel: tr.carModel,
+    carColor: tr.carColor,
+    numberPlate: tr.numberPlate,
+    hotelStarRating: tr.hotelStarRating,
+    numberOfRooms: tr.numberOfRooms,
     createdAt: tr.createdAt,
     updatedAt: tr.updatedAt
   };
@@ -60,6 +72,43 @@ travelDeskRouter.get(
       res.json(formatted);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch approved requests" });
+    }
+  }
+);
+
+// Get user documents (profile files) for a specific employee/manager
+travelDeskRouter.get(
+  "/users/:employeeUuid/documents",
+  requireUser,
+  requireRole(["ROLE_TRAVEL_DESK_ADMIN", "TRAVEL_DESK_ADMIN"]),
+  async (req, res) => {
+    try {
+      const { employeeUuid } = req.params;
+      const user = await User.findOne({ uuid: employeeUuid });
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Format documents with base64 data
+      const documents = (user.documents || []).map(doc => ({
+        type: doc.type,
+        url: doc.url || undefined,
+        data: doc.data || undefined, // Base64 data URL
+        mimeType: doc.mimeType || undefined,
+        fileName: doc.fileName || undefined,
+        uploadedAt: doc.uploadedAt || undefined
+      }));
+
+      res.json({
+        uuid: user.uuid,
+        name: user.name,
+        email: user.email,
+        documents: documents || []
+      });
+    } catch (error) {
+      console.error("Error fetching user documents:", error);
+      res.status(500).json({ message: "Failed to fetch user documents" });
     }
   }
 );
@@ -174,17 +223,25 @@ travelDeskRouter.post(
         flightArrivalTime,
         hotelName,
         hotelLocation,
+        hotelRoomNumber,
         hotelCheckin,
         hotelCheckout,
         hotelAmount,
         cabProvider,
+        cabDriverName,
         cabPickupTime,
         cabNotes,
         itineraryHtml,
         flightConfirmationUrl,
         hotelConfirmationUrl,
         cabConfirmationUrl,
-        confirmationFiles // Array of { fileName, base64, mimeType }
+        confirmationFiles, // Array of { fileName, base64, mimeType }
+        hotel, // Object format: { name, roomNumber, location, phoneNumber }
+        cab, // Object format: { name, driverName, phoneNumber, carModel, carColor, numberPlate }
+        driverPhoneNumber,
+        carModel,
+        carColor,
+        numberPlate
       } = req.body || {};
       
       // Use requestUuid or travelRequestId (support both for compatibility)
@@ -248,18 +305,53 @@ travelDeskRouter.post(
       }
 
       // For POST route, we'll accept flight/hotel/cab as strings (simple text) or objects
-      // The frontend can send them as strings for simplicity
+      // The frontend can send them as strings for simplicity or as objects
       const flightValue = flightAirline || flightNumber 
         ? `${flightAirline || ''} ${flightNumber || ''}`.trim() 
         : undefined;
       
-      const hotelValue = hotelName || hotelLocation
-        ? `${hotelName || ''} ${hotelLocation || ''}`.trim()
-        : undefined;
+      // Handle hotel - prefer object format, fallback to string
+      let hotelValue: any = undefined;
+      if (hotel && typeof hotel === 'object') {
+        // Object format: { name, roomNumber, location, phoneNumber }
+        hotelValue = {
+          name: hotel.name || hotelName || '',
+          roomNumber: hotel.roomNumber || hotelRoomNumber || '',
+          location: hotel.location || hotelLocation || '',
+          phoneNumber: hotel.phoneNumber || ''
+        };
+      } else if (hotelName || hotelLocation || hotelRoomNumber) {
+        // String format for backward compatibility
+        const hotelParts = [];
+        if (hotelName) hotelParts.push(hotelName);
+        if (hotelRoomNumber) hotelParts.push(`Room: ${hotelRoomNumber}`);
+        if (hotelLocation) hotelParts.push(hotelLocation);
+        hotelValue = hotelParts.length > 0 ? hotelParts.join(', ') : undefined;
+      }
       
-      const cabValue = cabProvider
-        ? cabProvider
-        : undefined;
+      // Handle cab - prefer object format, fallback to string
+      let cabValue: any = undefined;
+      if (cab && typeof cab === 'object') {
+        // Object format: { name, driverName, phoneNumber, carModel, carColor, numberPlate }
+        cabValue = {
+          name: cab.name || cabProvider || 'Local Transport',
+          driverName: cab.driverName || cabDriverName || '',
+          phoneNumber: cab.phoneNumber || driverPhoneNumber || '',
+          carModel: cab.carModel || carModel || '',
+          carColor: cab.carColor || carColor || '',
+          numberPlate: cab.numberPlate || numberPlate || ''
+        };
+      } else if (cabProvider || cabDriverName || driverPhoneNumber || carModel || carColor || numberPlate) {
+        // If separate fields are provided, create object
+        cabValue = {
+          name: cabProvider || 'Local Transport',
+          driverName: cabDriverName || '',
+          phoneNumber: driverPhoneNumber || '',
+          carModel: carModel || '',
+          carColor: carColor || '',
+          numberPlate: numberPlate || ''
+        };
+      }
 
       console.log('Creating booking with data:', {
         requestUuid: finalRequestUuid,

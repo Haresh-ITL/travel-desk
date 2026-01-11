@@ -225,18 +225,251 @@
       </div>
       
       <div class="dialog-content">
-        <div class="request-info">
-          <p><strong>Employee:</strong> {{ editingRequest.employeeName || 'N/A' }}</p>
-          <p><strong>From:</strong> {{ editingRequest.from || 'N/A' }}</p>
-          <p><strong>To:</strong> {{ editingRequest.to || 'N/A' }}</p>
-          <p><strong>Travel Type:</strong> {{ editingRequest.travelType || 'N/A' }}</p>
-          <p><strong>Start Date:</strong> {{ formatDate(editingRequest.startDate) }}</p>
-          <p><strong>End Date:</strong> {{ formatDate(editingRequest.endDate) }}</p>
-          <p><strong>Purpose:</strong> {{ editingRequest.purpose || 'N/A' }}</p>
+        <!-- Request Information Card -->
+        <div class="request-info-card">
+          <div class="card-header-section">
+            <h3 class="section-title">Travel Request Details</h3>
+          </div>
+          <div class="info-grid">
+            <div class="info-item">
+              <div class="info-label">
+                <span>Employee</span>
+              </div>
+              <div class="info-value">{{ editingRequest.employeeName || 'N/A' }}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">
+                <span>From</span>
+              </div>
+              <div class="info-value">{{ editingRequest.from || 'N/A' }}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">
+                <span>To</span>
+              </div>
+              <div class="info-value">{{ editingRequest.to || 'N/A' }}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">
+                <span>Travel Type</span>
+              </div>
+              <div class="info-value">
+                <mat-chip>{{ editingRequest.travelType || 'N/A' }}</mat-chip>
+              </div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">
+                <span>Transport Mode</span>
+              </div>
+              <div class="info-value">{{ editingRequest.modeOfTransport || 'N/A' }}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">
+                <span>Start Date</span>
+              </div>
+              <div class="info-value">{{ formatDate(editingRequest.startDate) }}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">
+                <span>End Date</span>
+              </div>
+              <div class="info-value">{{ formatDate(editingRequest.endDate) }}</div>
+            </div>
+            <div class="info-item full-width">
+              <div class="info-label">
+                <span>Purpose</span>
+              </div>
+              <div class="info-value purpose-text">{{ editingRequest.purpose || 'N/A' }}</div>
+            </div>
+          </div>
         </div>
         
-        <div class="file-upload-section">
-          <h3>Upload Booking Documents (PDF, Images, Word)</h3>
+        <!-- Additional Preferences Card -->
+        <div class="preferences-card" *ngIf="hasPreferences(editingRequest)">
+          <div class="card-header-section">
+            <h3 class="section-title">Additional Preferences</h3>
+          </div>
+          <div class="preferences-grid">
+            <div class="preference-item" *ngIf="isTrue(editingRequest.isDisabled)">
+              <div class="preference-label">
+                <span>Disability Status</span>
+              </div>
+              <div class="preference-value">
+                <mat-chip color="primary">Yes</mat-chip>
+              </div>
+            </div>
+            <div class="preference-item full-width" *ngIf="isTrue(editingRequest.isDisabled) && editingRequest.disabilityDescription">
+              <div class="preference-label">
+                <span>Disability Description</span>
+              </div>
+              <div class="preference-value">{{ editingRequest.disabilityDescription }}</div>
+            </div>
+            <div class="preference-item" *ngIf="editingRequest.foodPreference">
+              <div class="preference-label">
+                <span>Food Preference</span>
+              </div>
+              <div class="preference-value">
+                <mat-chip [color]="editingRequest.foodPreference === 'VEG' ? 'primary' : 'accent'">
+                  {{ editingRequest.foodPreference === 'VEG' ? 'Vegetarian' : 'Non-Vegetarian' }}
+                </mat-chip>
+              </div>
+            </div>
+            <div class="preference-item full-width" *ngIf="editingRequest.specificFoodPreferences && editingRequest.specificFoodPreferences.trim()">
+              <div class="preference-label">
+                <span>Specific Food Preferences</span>
+              </div>
+              <div class="preference-value">{{ editingRequest.specificFoodPreferences }}</div>
+            </div>
+            <div class="preference-item" *ngIf="isTrue(editingRequest.localTransportRequired)">
+              <div class="preference-label">
+                <span>Local Transport Required</span>
+              </div>
+              <div class="preference-value">
+                <mat-chip color="primary">Yes</mat-chip>
+              </div>
+            </div>
+            <div class="preference-item" *ngIf="isTrue(editingRequest.localTransportRequired) && editingRequest.numberOfSeats">
+              <div class="preference-label">
+                <span>Number of Seats Required</span>
+              </div>
+              <div class="preference-value">
+                <mat-chip color="accent">{{ editingRequest.numberOfSeats }}</mat-chip>
+              </div>
+            </div>
+            <div class="preference-item" *ngIf="isTrue(editingRequest.localTransportRequired) && editingRequest.driverPhoneNumber">
+              <div class="preference-label">
+                <span>Driver Phone Number</span>
+              </div>
+              <div class="preference-value">{{ editingRequest.driverPhoneNumber }}</div>
+            </div>
+            <div class="preference-item" *ngIf="isTrue(editingRequest.localTransportRequired) && editingRequest.carModel">
+              <div class="preference-label">
+                <span>Car Model</span>
+              </div>
+              <div class="preference-value">{{ editingRequest.carModel }}</div>
+            </div>
+            <div class="preference-item" *ngIf="isTrue(editingRequest.localTransportRequired) && editingRequest.carColor">
+              <div class="preference-label">
+                <span>Car Color</span>
+              </div>
+              <div class="preference-value">{{ editingRequest.carColor }}</div>
+            </div>
+            <div class="preference-item" *ngIf="isTrue(editingRequest.localTransportRequired) && editingRequest.numberPlate">
+              <div class="preference-label">
+                <span>Number Plate</span>
+              </div>
+              <div class="preference-value">{{ editingRequest.numberPlate }}</div>
+            </div>
+            <div class="preference-item" *ngIf="editingRequest.hotelStarRating && editingRequest.hotelStarRating.trim() && editingRequest.hotelStarRating.trim() !== 'No Preference'">
+              <div class="preference-label">
+                <span>Hotel Star Rating</span>
+              </div>
+              <div class="preference-value">
+                <mat-chip color="accent">{{ editingRequest.hotelStarRating }} Star</mat-chip>
+              </div>
+            </div>
+            <div class="preference-item" *ngIf="editingRequest.numberOfRooms && editingRequest.numberOfRooms > 0">
+              <div class="preference-label">
+                <span>Number of Rooms</span>
+              </div>
+              <div class="preference-value">
+                <mat-chip>{{ editingRequest.numberOfRooms }}</mat-chip>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- User Profile Documents Card -->
+        <div class="profile-documents-card" *ngIf="editingRequest.employeeUuid">
+          <div class="card-header-section">
+            <h3 class="section-title">Employee/Manager Profile Documents</h3>
+          </div>
+          
+          <div *ngIf="loadingDocuments" class="loading-documents">
+            <mat-spinner diameter="30"></mat-spinner>
+            <span>Loading documents...</span>
+          </div>
+          
+          <div *ngIf="!loadingDocuments && userDocuments.length === 0" class="no-documents">
+            <mat-icon>folder_open</mat-icon>
+            <p>No documents uploaded in profile</p>
+          </div>
+          
+          <div *ngIf="!loadingDocuments && userDocuments.length > 0" class="documents-list">
+            <div class="document-item" *ngFor="let doc of userDocuments">
+              <div class="document-icon">
+                <mat-icon>{{ getDocumentIcon(doc.mimeType) }}</mat-icon>
+              </div>
+              <div class="document-info">
+                <div class="document-name">{{ doc.fileName || getDocumentTypeLabel(doc.type) }}</div>
+                <div class="document-meta">
+                  <span class="document-type">{{ getDocumentTypeLabel(doc.type) }}</span>
+                  <span class="document-date" *ngIf="doc.uploadedAt">{{ formatDate(doc.uploadedAt) }}</span>
+                </div>
+              </div>
+              <div class="document-actions">
+                <button mat-icon-button color="primary" (click)="viewDocument(doc)" matTooltip="View Document" *ngIf="doc.data || doc.url">
+                  <mat-icon>visibility</mat-icon>
+                </button>
+                <button mat-icon-button color="accent" (click)="downloadDocument(doc)" matTooltip="Download Document" *ngIf="doc.data || doc.url">
+                  <mat-icon>download</mat-icon>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Booking Details Card -->
+        <div class="booking-details-card">
+          <div class="card-header-section">
+            <h3 class="section-title">Booking Details</h3>
+          </div>
+          
+          <!-- Hotel Details -->
+          <div class="booking-section">
+            <h4 class="subsection-title">Hotel Information</h4>
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Hotel Name</mat-label>
+              <input matInput [(ngModel)]="hotelName" placeholder="Enter hotel name">
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Room Numbers</mat-label>
+              <input matInput [(ngModel)]="hotelRoomNumbers" placeholder="e.g., 101, 102, 103">
+            </mat-form-field>
+          </div>
+          
+          <!-- Driver & Car Details (only if local transport is required) -->
+          <div class="booking-section" *ngIf="isTrue(editingRequest.localTransportRequired)">
+            <h4 class="subsection-title">Local Transport Details</h4>
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Driver Name</mat-label>
+              <input matInput [(ngModel)]="driverName" placeholder="Enter driver name">
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Driver Phone Number</mat-label>
+              <input matInput [(ngModel)]="driverPhoneNumber" type="tel" placeholder="e.g., +1234567890">
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Car Model</mat-label>
+              <input matInput [(ngModel)]="carModel" placeholder="e.g., Toyota Camry">
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Car Color</mat-label>
+              <input matInput [(ngModel)]="carColor" placeholder="e.g., Black">
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Number Plate</mat-label>
+              <input matInput [(ngModel)]="numberPlate" placeholder="e.g., ABC-1234">
+            </mat-form-field>
+          </div>
+        </div>
+        
+        <!-- File Upload Card -->
+        <div class="file-upload-card">
+          <div class="card-header-section">
+            <h3 class="section-title">Upload Booking Documents</h3>
+          </div>
+          <p class="file-hint">Supported formats: PDF, Images (JPG, PNG), Word Documents (DOC, DOCX)</p>
           <div class="file-input-wrapper">
             <input 
               type="file" 
@@ -245,19 +478,19 @@
               multiple 
               accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
               style="display: none;">
-            <button mat-stroked-button (click)="fileInput.click()">
-              <mat-icon>attach_file</mat-icon>
-              Choose Files
+            <button mat-raised-button color="primary" (click)="fileInput.click()" class="upload-button">
+              <span>Choose Files</span>
             </button>
           </div>
           
           <div *ngIf="selectedFiles.length > 0" class="selected-files">
-            <h4>Selected Files:</h4>
+            <h4 class="files-title">
+              <span>Selected Files ({{ selectedFiles.length }})</span>
+            </h4>
             <div class="file-list">
               <div *ngFor="let file of selectedFiles; let i = index" class="file-item">
-                <mat-icon>description</mat-icon>
-                <span>{{ getFileName(file) }}</span>
-                <button mat-icon-button color="warn" (click)="removeFile(i)" matTooltip="Remove file">
+                <span class="file-name">{{ getFileName(file) }}</span>
+                <button mat-icon-button color="warn" (click)="removeFile(i)" matTooltip="Remove file" class="remove-btn">
                   <mat-icon>close</mat-icon>
                 </button>
               </div>

@@ -18,6 +18,38 @@ export class TravelDeskService {
   }
 
   /**
+   * Get user documents (profile files) for a specific employee/manager
+   * @param employeeUuid UUID of the employee/manager
+   */
+  getUserDocuments(employeeUuid: string): Observable<{
+    uuid: string;
+    name: string;
+    email: string;
+    documents: Array<{
+      type: string;
+      url?: string;
+      data?: string;
+      mimeType?: string;
+      fileName?: string;
+      uploadedAt?: Date;
+    }>;
+  }> {
+    return this.http.get<{
+      uuid: string;
+      name: string;
+      email: string;
+      documents: Array<{
+        type: string;
+        url?: string;
+        data?: string;
+        mimeType?: string;
+        fileName?: string;
+        uploadedAt?: Date;
+      }>;
+    }>(`${this.apiUrl}/users/${employeeUuid}/documents`);
+  }
+
+  /**
    * Create a booking for an approved travel request
    * This replaces the deprecated PUT /requests/:uuid/book endpoint
    * @param requestUuid UUID of the approved travel request
@@ -32,6 +64,12 @@ export class TravelDeskService {
     cabProvider?: string;
     itineraryHtml?: string;
     confirmationFiles?: Array<{ fileName: string; base64: string; mimeType: string }>;
+    hotel?: { name: string; roomNumber: string; location: string; phoneNumber?: string };
+    cab?: { name: string; driverName: string; phoneNumber?: string; carModel?: string; carColor?: string; numberPlate?: string };
+    driverPhoneNumber?: string;
+    carModel?: string;
+    carColor?: string;
+    numberPlate?: string;
   }, files?: File[]): Observable<BookingWithDetails> {
     // Validate requestUuid
     if (!requestUuid || requestUuid.trim() === '') {
@@ -48,13 +86,33 @@ export class TravelDeskService {
       payload.flightAirline = bookingData.flightAirline || "";
       payload.flightNumber = bookingData.flightNumber || "";
     }
-    if (bookingData?.hotelName || bookingData?.hotelLocation) {
+    if (bookingData?.hotel) {
+      // Use new hotel object format
+      payload.hotelName = bookingData.hotel.name || "";
+      payload.hotelLocation = bookingData.hotel.location || "";
+      payload.hotelRoomNumber = bookingData.hotel.roomNumber || "";
+    } else if (bookingData?.hotelName || bookingData?.hotelLocation) {
+      // Legacy format support
       payload.hotelName = bookingData.hotelName || "";
       payload.hotelLocation = bookingData.hotelLocation || "";
     }
-    if (bookingData?.cabProvider) {
+    if (bookingData?.cab) {
+      // Use new cab object format
+      payload.cabProvider = bookingData.cab.name || "";
+      payload.cabDriverName = bookingData.cab.driverName || "";
+      if (bookingData.cab.carModel) payload.carModel = bookingData.cab.carModel;
+      if (bookingData.cab.carColor) payload.carColor = bookingData.cab.carColor;
+      if (bookingData.cab.numberPlate) payload.numberPlate = bookingData.cab.numberPlate;
+      if (bookingData.cab.phoneNumber) payload.driverPhoneNumber = bookingData.cab.phoneNumber;
+    } else if (bookingData?.cabProvider) {
+      // Legacy format support
       payload.cabProvider = bookingData.cabProvider;
     }
+    // Add separate car fields if provided
+    if (bookingData?.driverPhoneNumber) payload.driverPhoneNumber = bookingData.driverPhoneNumber;
+    if (bookingData?.carModel) payload.carModel = bookingData.carModel;
+    if (bookingData?.carColor) payload.carColor = bookingData.carColor;
+    if (bookingData?.numberPlate) payload.numberPlate = bookingData.numberPlate;
     
     // Add confirmation files if provided
     if (bookingData?.confirmationFiles && bookingData.confirmationFiles.length > 0) {

@@ -26,18 +26,9 @@
       <mat-form-field appearance="outline">
         <mat-label>Mode of Transport</mat-label>
         <mat-select formControlName="modeOfTransport">
-          <mat-option [value]="TransportMode.FLIGHT">
-            <span style="display: flex; align-items: center; gap: 8px;">
-              <mat-icon style="font-size: 20px; width: 20px; height: 20px;">flight</mat-icon>
-              <span>Flight</span>
-            </span>
-          </mat-option>
-          <mat-option [value]="TransportMode.TRAIN">
-            <span style="display: flex; align-items: center; gap: 8px;">
-              <mat-icon style="font-size: 20px; width: 20px; height: 20px;">train</mat-icon>
-              <span>Train</span>
-            </span>
-          </mat-option>
+          <mat-option [value]="TransportMode.FLIGHT">Flight</mat-option>
+          <mat-option [value]="TransportMode.TRAIN">Train</mat-option>
+          <mat-option [value]="TransportMode.BUS">Bus</mat-option>
         </mat-select>
         <mat-error *ngIf="requestForm.get('modeOfTransport')?.hasError('required')">Required</mat-error>
       </mat-form-field>
@@ -77,6 +68,64 @@
       <mat-error *ngIf="requestForm.get('purpose')?.hasError('required')">Required</mat-error>
       <mat-error *ngIf="requestForm.get('purpose')?.hasError('minlength')">At least 10 characters</mat-error>
     </mat-form-field>
+
+    <!-- Disability Information -->
+    <div class="form-section">
+      <mat-checkbox formControlName="isDisabled">I am a person with disability</mat-checkbox>
+      <mat-form-field appearance="outline" *ngIf="requestForm.get('isDisabled')?.value" class="conditional-field">
+        <mat-label>Disability Description</mat-label>
+        <textarea matInput formControlName="disabilityDescription" rows="2" placeholder="Please describe your disability and any special requirements"></textarea>
+        <mat-error *ngIf="requestForm.get('disabilityDescription')?.hasError('required')">Required</mat-error>
+      </mat-form-field>
+    </div>
+
+    <!-- Food Preferences -->
+    <div class="form-section">
+      <mat-label class="section-label">Food Preference</mat-label>
+      <mat-radio-group formControlName="foodPreference" class="radio-group">
+        <mat-radio-button value="VEG">Vegetarian</mat-radio-button>
+        <mat-radio-button value="NON_VEG">Non-Vegetarian</mat-radio-button>
+      </mat-radio-group>
+      <mat-form-field appearance="outline" class="conditional-field">
+        <mat-label>Specific Food Preferences</mat-label>
+        <textarea matInput formControlName="specificFoodPreferences" rows="2" placeholder="Any specific dietary requirements, allergies, or preferences"></textarea>
+      </mat-form-field>
+    </div>
+
+    <!-- Local Transport Requirement -->
+    <div class="form-section">
+      <mat-checkbox formControlName="localTransportRequired">I need taxi/driver/car for local travel at destination</mat-checkbox>
+      <mat-form-field appearance="outline" *ngIf="requestForm.get('localTransportRequired')?.value" class="conditional-field">
+        <mat-label>Number of Seats Needed</mat-label>
+        <input matInput type="number" formControlName="numberOfSeats" min="1" placeholder="e.g., 4">
+        <mat-error *ngIf="requestForm.get('numberOfSeats')?.hasError('required')">Required</mat-error>
+        <mat-error *ngIf="requestForm.get('numberOfSeats')?.hasError('min')">At least 1 seat required</mat-error>
+      </mat-form-field>
+    </div>
+
+    <!-- Hotel Preferences -->
+    <div class="form-section">
+      <mat-label class="section-label">Hotel Preferences</mat-label>
+      <div class="hotel-preferences-grid">
+        <mat-form-field appearance="outline">
+          <mat-label>Hotel Star Rating</mat-label>
+          <mat-select formControlName="hotelStarRating">
+            <mat-option value="">No Preference</mat-option>
+            <mat-option value="3">3 Star</mat-option>
+            <mat-option value="4">4 Star</mat-option>
+            <mat-option value="5">5 Star</mat-option>
+            <mat-option value="7">7 Star</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Number of Rooms</mat-label>
+          <input matInput type="number" formControlName="numberOfRooms" min="1" placeholder="1">
+          <mat-error *ngIf="requestForm.get('numberOfRooms')?.hasError('required')">Required</mat-error>
+          <mat-error *ngIf="requestForm.get('numberOfRooms')?.hasError('min')">At least 1 room required</mat-error>
+        </mat-form-field>
+      </div>
+    </div>
 
     <div class="info-note">
       <mat-icon>info</mat-icon>

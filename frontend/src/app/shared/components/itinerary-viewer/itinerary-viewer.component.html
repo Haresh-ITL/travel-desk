@@ -27,14 +27,12 @@
     <!-- Quick Summary -->
     <div class="summary-section">
       <div class="summary-item">
-        <mat-icon>flight_takeoff</mat-icon>
         <div>
           <span class="summary-label">From</span>
           <span class="summary-value">{{ data.from || (data.outboundJourney?.from) }}</span>
         </div>
       </div>
       <div class="summary-item">
-        <mat-icon>flight_land</mat-icon>
         <div>
           <span class="summary-label">To</span>
           <span class="summary-value">{{ data.to || (data.outboundJourney?.to) }}</span>
@@ -101,6 +99,93 @@
       </div>
     </div>
 
+    <!-- Additional Preferences -->
+    <div class="section" *ngIf="data.isDisabled || data.foodPreference || data.specificFoodPreferences || data.localTransportRequired || data.hotelStarRating || data.numberOfRooms">
+      <div class="section-title">
+        <mat-icon>settings</mat-icon>
+        <span>Additional Preferences</span>
+      </div>
+      <div class="info-grid">
+        <div class="info-item" *ngIf="data.isDisabled">
+          <mat-icon>accessibility</mat-icon>
+          <div>
+            <span class="info-label">Disability Status</span>
+            <span class="info-value">Yes</span>
+          </div>
+        </div>
+        <div class="info-item" *ngIf="data.isDisabled && data.disabilityDescription">
+          <mat-icon>description</mat-icon>
+          <div>
+            <span class="info-label">Disability Description</span>
+            <span class="info-value">{{ data.disabilityDescription }}</span>
+          </div>
+        </div>
+        <div class="info-item" *ngIf="data.foodPreference">
+          <mat-icon>restaurant</mat-icon>
+          <div>
+            <span class="info-label">Food Preference</span>
+            <span class="info-value">{{ data.foodPreference === 'VEG' ? 'Vegetarian' : 'Non-Vegetarian' }}</span>
+          </div>
+        </div>
+        <div class="info-item" *ngIf="data.specificFoodPreferences">
+          <mat-icon>restaurant_menu</mat-icon>
+          <div>
+            <span class="info-label">Specific Food Preferences</span>
+            <span class="info-value">{{ data.specificFoodPreferences }}</span>
+          </div>
+        </div>
+        <div class="info-item" *ngIf="data.localTransportRequired">
+          <mat-icon>local_taxi</mat-icon>
+          <div>
+            <span class="info-label">Local Transport Required</span>
+            <span class="info-value">Yes</span>
+          </div>
+        </div>
+        <div class="info-item" *ngIf="data.localTransportRequired && data.driverPhoneNumber">
+          <mat-icon>phone</mat-icon>
+          <div>
+            <span class="info-label">Driver Phone Number</span>
+            <span class="info-value">{{ data.driverPhoneNumber }}</span>
+          </div>
+        </div>
+        <div class="info-item" *ngIf="data.localTransportRequired && data.carModel">
+          <mat-icon>directions_car</mat-icon>
+          <div>
+            <span class="info-label">Car Model</span>
+            <span class="info-value">{{ data.carModel }}</span>
+          </div>
+        </div>
+        <div class="info-item" *ngIf="data.localTransportRequired && data.carColor">
+          <mat-icon>palette</mat-icon>
+          <div>
+            <span class="info-label">Car Color</span>
+            <span class="info-value">{{ data.carColor }}</span>
+          </div>
+        </div>
+        <div class="info-item" *ngIf="data.localTransportRequired && data.numberPlate">
+          <mat-icon>confirmation_number</mat-icon>
+          <div>
+            <span class="info-label">Number Plate</span>
+            <span class="info-value">{{ data.numberPlate }}</span>
+          </div>
+        </div>
+        <div class="info-item" *ngIf="data.hotelStarRating">
+          <mat-icon>star</mat-icon>
+          <div>
+            <span class="info-label">Hotel Star Rating</span>
+            <span class="info-value">{{ data.hotelStarRating }} Star</span>
+          </div>
+        </div>
+        <div class="info-item" *ngIf="data.numberOfRooms">
+          <mat-icon>hotel</mat-icon>
+          <div>
+            <span class="info-label">Number of Rooms</span>
+            <span class="info-value">{{ data.numberOfRooms }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Outbound Journey -->
     <div class="section" *ngIf="data.outboundJourney">
       <div class="section-title">
@@ -111,7 +196,6 @@
         <div class="journey-route">
           <div class="route-point">
             <div class="route-icon">
-              <mat-icon>flight_takeoff</mat-icon>
             </div>
             <div class="route-info">
               <div class="route-location">{{ data.outboundJourney.from }}</div>
@@ -127,7 +211,6 @@
           </div>
           <div class="route-point">
             <div class="route-icon arrival">
-              <mat-icon>flight_land</mat-icon>
             </div>
             <div class="route-info">
               <div class="route-location">{{ data.outboundJourney.to }}</div>
@@ -162,7 +245,6 @@
         <div class="journey-route">
           <div class="route-point">
             <div class="route-icon">
-              <mat-icon>flight_takeoff</mat-icon>
             </div>
             <div class="route-info">
               <div class="route-location">{{ data.returnJourney.from }}</div>
@@ -178,7 +260,6 @@
           </div>
           <div class="route-point">
             <div class="route-icon arrival">
-              <mat-icon>flight_land</mat-icon>
             </div>
             <div class="route-info">
               <div class="route-location">{{ data.returnJourney.to }}</div>
@@ -258,53 +339,43 @@
     </div>
 
     <!-- Cab / Local Transport -->
-    <div class="section" *ngIf="data.cabDetails">
+    <div class="section" *ngIf="data.cabDetails || (data.localTransportRequired && (data.driverPhoneNumber || data.numberPlate || data.carModel || data.carColor))">
       <div class="section-title">
         <mat-icon>local_taxi</mat-icon>
         <span>Local Transport</span>
       </div>
       <div class="cab-container">
-        <div class="cab-header">
+        <div class="cab-header" *ngIf="data.cabDetails">
           <div class="cab-provider">
             <mat-icon>local_taxi</mat-icon>
             <span>{{ data.cabDetails.provider }}</span>
           </div>
-          <div class="cab-time">
+          <div class="cab-time" *ngIf="data.cabDetails.pickupDateTime">
             <mat-icon>schedule</mat-icon>
             <span>{{ formatDateTime(data.cabDetails.pickupDateTime) }}</span>
           </div>
         </div>
-        <div class="cab-route">
-          <div class="cab-location">
-            <mat-icon>location_on</mat-icon>
-            <div>
-              <span class="cab-label">Pickup</span>
-              <span class="cab-value">{{ data.cabDetails.pickupLocation }}</span>
-            </div>
-          </div>
-          <div class="cab-arrow">
-            <mat-icon>arrow_downward</mat-icon>
-          </div>
-          <div class="cab-location">
-            <mat-icon>place</mat-icon>
-            <div>
-              <span class="cab-label">Drop</span>
-              <span class="cab-value">{{ data.cabDetails.dropLocation }}</span>
-            </div>
-          </div>
-        </div>
-        <div class="cab-driver" *ngIf="data.cabDetails.driverName || data.cabDetails.driverContact || data.cabDetails.vehicleNumber">
+        <!-- Driver Details Section - Always show when cabDetails exists -->
+        <div class="cab-driver" *ngIf="data.cabDetails">
           <div class="driver-item" *ngIf="data.cabDetails.driverName">
             <mat-icon>person</mat-icon>
-            <span>Driver: <strong>{{ data.cabDetails.driverName }}</strong></span>
+            <span>Driver Name: <strong>{{ data.cabDetails.driverName }}</strong></span>
           </div>
-          <div class="driver-item" *ngIf="data.cabDetails.driverContact">
+          <div class="driver-item" *ngIf="data.cabDetails.driverContact || data.driverPhoneNumber">
             <mat-icon>phone</mat-icon>
-            <span>Contact: <strong>{{ data.cabDetails.driverContact }}</strong></span>
+            <span>Driver Phone: <strong>{{ data.cabDetails.driverContact || data.driverPhoneNumber || 'Not provided' }}</strong></span>
           </div>
-          <div class="driver-item" *ngIf="data.cabDetails.vehicleNumber">
+          <div class="driver-item" *ngIf="data.cabDetails.carModel || data.carModel">
             <mat-icon>directions_car</mat-icon>
-            <span>Vehicle: <strong>{{ data.cabDetails.vehicleNumber }}</strong></span>
+            <span>Car Model: <strong>{{ data.cabDetails.carModel || data.carModel || 'Not provided' }}</strong></span>
+          </div>
+          <div class="driver-item" *ngIf="data.cabDetails.carColor || data.carColor">
+            <mat-icon>palette</mat-icon>
+            <span>Car Color: <strong>{{ data.cabDetails.carColor || data.carColor || 'Not provided' }}</strong></span>
+          </div>
+          <div class="driver-item" *ngIf="data.cabDetails.vehicleNumber || data.numberPlate">
+            <mat-icon>confirmation_number</mat-icon>
+            <span>Number Plate: <strong>{{ data.cabDetails.vehicleNumber || data.numberPlate || 'Not provided' }}</strong></span>
           </div>
         </div>
       </div>
@@ -325,7 +396,7 @@
             </div>
             <div class="file-info">
               <div class="file-name">{{ file.fileName }}</div>
-              <div class="file-type" *ngIf="file.mimeType">{{ file.mimeType.split('/')[1]?.toUpperCase() || 'FILE' }}</div>
+              <div class="file-type" *ngIf="file.mimeType">{{ (file.mimeType.split('/')[1] || '').toUpperCase() || 'FILE' }}</div>
             </div>
             <button mat-icon-button color="primary" (click)="openFile(file)" matTooltip="Open File">
               <mat-icon>open_in_new</mat-icon>

@@ -19,6 +19,9 @@ export interface ICabDetails {
   name: string;
   driverName: string;
   phoneNumber: string;
+  carModel?: string;
+  carColor?: string;
+  numberPlate?: string;
 }
 
 export interface IBooking {
@@ -65,9 +68,12 @@ const bookingSchema = new Schema<IBooking>({
                (typeof v === 'object' && v !== null && 
                 typeof v.name === 'string' && 
                 typeof v.driverName === 'string' && 
-                typeof v.phoneNumber === 'string');
+                typeof v.phoneNumber === 'string' &&
+                (v.carModel === undefined || typeof v.carModel === 'string') &&
+                (v.carColor === undefined || typeof v.carColor === 'string') &&
+                (v.numberPlate === undefined || typeof v.numberPlate === 'string'));
       },
-      message: 'Cab must be either a string or an object with name, driverName, and phoneNumber'
+      message: 'Cab must be either a string or an object with name, driverName, phoneNumber, and optional carModel, carColor, numberPlate'
     }
   },
   confirmationFiles: [{ 

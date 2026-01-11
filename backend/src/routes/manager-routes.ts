@@ -42,43 +42,85 @@ async function formatTravelRequest(tr: any) {
     managerComment: tr.managerComment,
     idProofUrl: tr.idProofUrl,
     passportUrl: tr.passportUrl,
+    isDisabled: tr.isDisabled,
+    disabilityDescription: tr.disabilityDescription,
+    foodPreference: tr.foodPreference,
+    specificFoodPreferences: tr.specificFoodPreferences,
+    localTransportRequired: tr.localTransportRequired,
+    numberOfSeats: tr.numberOfSeats,
+    driverPhoneNumber: tr.driverPhoneNumber,
+    carModel: tr.carModel,
+    carColor: tr.carColor,
+    numberPlate: tr.numberPlate,
+    hotelStarRating: tr.hotelStarRating,
+    numberOfRooms: tr.numberOfRooms,
     createdAt: tr.createdAt,
     updatedAt: tr.updatedAt
   };
 }
 
-// Get all requests for this manager
+// Get all requests for this manager (their own requests where they are the employee)
 managerRouter.get(
   "/requests",
   requireUser,
   requireRole(["ROLE_MANAGER", "MANAGER"]),
   async (req, res) => {
     try {
+      // Get requests where manager is the employee (for "My Travel Requests")
       const list = await TravelRequest.find({
-        primaryManagerId: req.user!.uuid
+        employeeId: req.user!.uuid
       });
+      console.log(`Found ${list.length} own requests for manager ${req.user!.uuid}`);
       const formatted = await Promise.all(list.map(formatTravelRequest));
       res.json(formatted);
     } catch (error) {
+      console.error('Error fetching manager requests:', error);
       res.status(500).json({ message: "Failed to fetch requests" });
     }
   }
 );
 
-// pending requests for this manager
+// Get all employee requests for this manager (requests where manager is the primary manager, but NOT their own requests)
+managerRouter.get(
+  "/team-requests",
+  requireUser,
+  requireRole(["ROLE_MANAGER", "MANAGER"]),
+  async (req, res) => {
+    try {
+      // Get requests where manager is the primary manager BUT exclude requests where manager is also the employee
+      // This ensures we only get employee requests, not manager's own requests
+      const list = await TravelRequest.find({
+        primaryManagerId: req.user!.uuid,
+        employeeId: { $ne: req.user!.uuid } // Exclude requests where manager is the employee
+      });
+      console.log(`Found ${list.length} team requests for manager ${req.user!.uuid}`);
+      const formatted = await Promise.all(list.map(formatTravelRequest));
+      res.json(formatted);
+    } catch (error) {
+      console.error('Error fetching team requests:', error);
+      res.status(500).json({ message: "Failed to fetch team requests" });
+    }
+  }
+);
+
+// pending requests for this manager (employee requests only, not manager's own)
 managerRouter.get(
   "/requests/pending",
   requireUser,
   requireRole(["ROLE_MANAGER", "MANAGER"]),
   async (req, res) => {
     try {
+      // Get pending requests where manager is the primary manager BUT exclude manager's own requests
       const list = await TravelRequest.find({
         primaryManagerId: req.user!.uuid,
+        employeeId: { $ne: req.user!.uuid }, // Exclude requests where manager is the employee
         status: "PENDING"
       });
+      console.log(`Found ${list.length} pending team requests for manager ${req.user!.uuid}`);
       const formatted = await Promise.all(list.map(formatTravelRequest));
       res.json(formatted);
     } catch (error) {
+      console.error('Error fetching pending requests:', error);
       res.status(500).json({ message: "Failed to fetch pending requests" });
     }
   }
@@ -96,12 +138,93 @@ managerRouter.post(
   ]),
   async (req, res) => {
     try {
-      const { from, to, travelType, startDate, endDate, purpose, modeOfTransport } = req.body;
+      const { 
+        from, 
+        to, 
+        travelType, 
+        startDate, 
+        endDate, 
+        purpose, 
+        modeOfTransport,
+        isDisabled,
+        disabilityDescription,
+        foodPreference,
+        specificFoodPreferences,
+        localTransportRequired,
+        numberOfSeats,
+        driverPhoneNumber,
+        carModel,
+        carColor,
+        numberPlate,
+        hotelStarRating,
+        numberOfRooms
+      } = req.body;
       
       const files = req.files as { [fieldname: string]: Express.Multer.File[] };
       const filePaths = files.files?.map((f) => f.path) || [];
       const idProofFile = files.idProof?.[0];
       const passportFile = files.passport?.[0];
+
+      // Log received preference data for debugging
+      console.log('=== Manager POST /requests - Received Preference Data ===');
+      console.log('isDisabled:', isDisabled, typeof isDisabled);
+      console.log('disabilityDescription:', disabilityDescription);
+      console.log('foodPreference:', foodPreference);
+      console.log('specificFoodPreferences:', specificFoodPreferences);
+      console.log('localTransportRequired:', localTransportRequired, typeof localTransportRequired);
+      console.log('driverPhoneNumber:', driverPhoneNumber);
+      console.log('carModel:', carModel);
+      console.log('carColor:', carColor);
+      console.log('numberPlate:', numberPlate);
+      console.log('hotelStarRating:', hotelStarRating);
+      console.log('numberOfRooms:', numberOfRooms, typeof numberOfRooms);
+      console.log('==========================================================');
+
+      // Handle preference fields - preserve empty strings if provided, but allow undefined
+      const preferenceData: any = {
+        isDisabled: isDisabled === 'true' || isDisabled === true || false,
+        localTransportRequired: localTransportRequired === 'true' || localTransportRequired === true || false
+      };
+      
+      // Handle numberOfSeats - convert to number if provided
+      if (numberOfSeats !== undefined && numberOfSeats !== null && numberOfSeats !== '') {
+        preferenceData.numberOfSeats = parseInt(numberOfSeats.toString(), 10) || 1;
+      }
+
+      // Only set string fields if they exist (not undefined/null), but allow empty strings
+      if (disabilityDescription !== undefined && disabilityDescription !== null) {
+        preferenceData.disabilityDescription = disabilityDescription;
+      }
+      if (foodPreference !== undefined && foodPreference !== null && foodPreference !== '') {
+        preferenceData.foodPreference = foodPreference;
+      }
+      if (specificFoodPreferences !== undefined && specificFoodPreferences !== null) {
+        preferenceData.specificFoodPreferences = specificFoodPreferences;
+      }
+      if (driverPhoneNumber !== undefined && driverPhoneNumber !== null) {
+        preferenceData.driverPhoneNumber = driverPhoneNumber;
+      }
+      if (carModel !== undefined && carModel !== null) {
+        preferenceData.carModel = carModel;
+      }
+      if (carColor !== undefined && carColor !== null) {
+        preferenceData.carColor = carColor;
+      }
+      if (numberPlate !== undefined && numberPlate !== null) {
+        preferenceData.numberPlate = numberPlate;
+      }
+      if (hotelStarRating !== undefined && hotelStarRating !== null && hotelStarRating !== '') {
+        preferenceData.hotelStarRating = hotelStarRating;
+      }
+      if (numberOfRooms !== undefined && numberOfRooms !== null) {
+        preferenceData.numberOfRooms = numberOfRooms ? parseInt(String(numberOfRooms)) : 1;
+      } else {
+        preferenceData.numberOfRooms = 1;
+      }
+
+      console.log('=== Processed Preference Data to Save ===');
+      console.log(JSON.stringify(preferenceData, null, 2));
+      console.log('========================================');
 
       // Manager creates request for themselves - auto-approved
       const tr = await TravelRequest.create({
@@ -119,8 +242,23 @@ managerRouter.post(
         idProofUrl: idProofFile?.path,
         passportUrl: passportFile?.path,
         status: "APPROVED", // Auto-approved for manager's own requests
-        managerComment: "Auto-approved: Manager's own request"
+        managerComment: "Auto-approved: Manager's own request",
+        ...preferenceData
       });
+
+      console.log('=== Saved Travel Request (Manager) ===');
+      console.log('isDisabled:', tr.isDisabled);
+      console.log('disabilityDescription:', tr.disabilityDescription);
+      console.log('foodPreference:', tr.foodPreference);
+      console.log('specificFoodPreferences:', tr.specificFoodPreferences);
+      console.log('localTransportRequired:', tr.localTransportRequired);
+      console.log('driverPhoneNumber:', tr.driverPhoneNumber);
+      console.log('carModel:', tr.carModel);
+      console.log('carColor:', tr.carColor);
+      console.log('numberPlate:', tr.numberPlate);
+      console.log('hotelStarRating:', tr.hotelStarRating);
+      console.log('numberOfRooms:', tr.numberOfRooms);
+      console.log('=======================================');
 
       const formatted = await formatTravelRequest(tr);
       res.json(formatted);
@@ -147,6 +285,32 @@ managerRouter.put(
       tr.status = status;
       tr.managerComment = comment;
       await tr.save();
+      
+      // Send email notification if request is approved
+      if (status === "APPROVED") {
+        try {
+          const employee = await User.findOne({ uuid: tr.employeeId });
+          if (employee && employee.email) {
+            const { sendApprovalEmail } = await import("../utils/email.service");
+            await sendApprovalEmail(
+              employee.email,
+              employee.name,
+              {
+                from: tr.from,
+                to: tr.to,
+                travelType: tr.travelType,
+                startDate: tr.startDate,
+                endDate: tr.endDate,
+                purpose: tr.purpose,
+                managerComment: comment
+              }
+            );
+          }
+        } catch (emailError) {
+          // Log email error but don't fail the request
+          console.error('Error sending approval email:', emailError);
+        }
+      }
       
       const formatted = await formatTravelRequest(tr);
       res.json(formatted);

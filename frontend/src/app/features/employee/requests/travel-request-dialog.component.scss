@@ -89,6 +89,75 @@
   margin-bottom: 16px;
 }
 
+.form-section {
+  margin-bottom: 24px;
+  padding: 16px;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  
+  .section-label {
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    color: #374151;
+    margin-bottom: 12px;
+  }
+  
+  .radio-group {
+    display: flex;
+    gap: 24px;
+    margin-bottom: 16px;
+    
+    ::ng-deep .mat-mdc-radio-button {
+      margin-right: 0;
+    }
+  }
+  
+  .conditional-field {
+    width: 100%;
+    margin-top: 12px;
+  }
+  
+  .hotel-preferences-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    margin-top: 12px;
+  }
+  
+  .local-transport-fields {
+    width: 100%;
+    margin-top: 12px;
+  }
+  
+  .local-transport-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+  
+  ::ng-deep .mat-mdc-checkbox {
+    margin-bottom: 12px;
+    
+    .mdc-form-field {
+      padding: 0;
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .form-section {
+    .hotel-preferences-grid {
+      grid-template-columns: 1fr;
+    }
+    
+    .local-transport-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+}
+
 .info-note {
   display: flex;
   align-items: center;

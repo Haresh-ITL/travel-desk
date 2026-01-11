@@ -52,9 +52,9 @@ export class ManagerRequestsComponent implements OnInit, AfterViewInit {
   RequestStatus = RequestStatus;
   TransportMode = TransportMode;
   
-  // Status counts - only PENDING and BOOKED for managers
+  // Status counts - APPROVED and BOOKED for managers (their own requests are auto-approved)
   statusCounts = {
-    PENDING: 0,
+    APPROVED: 0,
     BOOKED: 0,
     TOTAL: 0
   };
@@ -88,12 +88,11 @@ export class ManagerRequestsComponent implements OnInit, AfterViewInit {
   }
 
   loadRequests(): void {
-    this.employeeService.getRequests().subscribe({
+    // Use manager service to get manager's own requests
+    this.managerService.getRequests().subscribe({
       next: (requests) => {
-        // Filter to only show PENDING and BOOKED status for managers
-        this.requests = (requests || []).filter(req => 
-          req.status === RequestStatus.PENDING || req.status === RequestStatus.BOOKED
-        );
+        // Show all manager's own requests (they are auto-approved, so status is APPROVED or BOOKED)
+        this.requests = requests || [];
         this.calculateStatusCounts();
         this.applyFilters();
       },
@@ -114,7 +113,7 @@ export class ManagerRequestsComponent implements OnInit, AfterViewInit {
     const requests = Array.isArray(this.requests) ? this.requests : [];
     
     this.statusCounts = {
-      PENDING: requests.filter(r => r.status === RequestStatus.PENDING).length,
+      APPROVED: requests.filter(r => r.status === RequestStatus.APPROVED).length,
       BOOKED: requests.filter(r => r.status === RequestStatus.BOOKED).length,
       TOTAL: requests.length
     };
@@ -162,8 +161,12 @@ export class ManagerRequestsComponent implements OnInit, AfterViewInit {
     switch (status) {
       case RequestStatus.PENDING:
         return 'status-chip-pending';
+      case RequestStatus.APPROVED:
+        return 'status-chip-approved';
       case RequestStatus.BOOKED:
         return 'status-chip-booked';
+      case RequestStatus.REJECTED:
+        return 'status-chip-rejected';
       default:
         return '';
     }
@@ -171,7 +174,16 @@ export class ManagerRequestsComponent implements OnInit, AfterViewInit {
 
   getTransportIcon(mode?: TransportMode): string {
     if (!mode) return 'flight';
-    return mode === TransportMode.FLIGHT ? 'flight' : 'train';
+    switch (mode) {
+      case TransportMode.FLIGHT:
+        return 'flight';
+      case TransportMode.TRAIN:
+        return 'train';
+      case TransportMode.BUS:
+        return 'directions_bus';
+      default:
+        return 'flight';
+    }
   }
 
   viewItinerary(request: TravelRequest): void {
@@ -226,6 +238,18 @@ export class ManagerRequestsComponent implements OnInit, AfterViewInit {
       endDate: endDate,
       from: booking?.from || request.from || '',
       to: booking?.to || request.to || '',
+      // Additional Preferences
+      isDisabled: request.isDisabled,
+      disabilityDescription: request.disabilityDescription,
+      foodPreference: request.foodPreference,
+      specificFoodPreferences: request.specificFoodPreferences,
+      localTransportRequired: request.localTransportRequired,
+      driverPhoneNumber: request.driverPhoneNumber,
+      carModel: request.carModel,
+      carColor: request.carColor,
+      numberPlate: request.numberPlate,
+      hotelStarRating: request.hotelStarRating,
+      numberOfRooms: request.numberOfRooms,
       // Include confirmation files and file paths
       confirmationFiles: booking?.confirmationFiles || [],
       filePaths: booking?.travelRequest?.filePaths || []
@@ -271,17 +295,16 @@ export class ManagerRequestsComponent implements OnInit, AfterViewInit {
       if (typeof booking.cab === 'object' && booking.cab.name) {
         itineraryData.cabDetails = {
           provider: booking.cab.name || '',
-          pickupLocation: booking.from || request.from || '',
-          dropLocation: booking.to || request.to || '',
           pickupDateTime: startDate,
           driverName: booking.cab.driverName || '',
-          driverContact: booking.cab.phoneNumber || ''
+          driverContact: booking.cab.phoneNumber || request.driverPhoneNumber || '',
+          vehicleNumber: booking.cab.numberPlate || request.numberPlate || '',
+          carModel: booking.cab.carModel || request.carModel || '',
+          carColor: booking.cab.carColor || request.carColor || ''
         };
       } else if (typeof booking.cab === 'string') {
         itineraryData.cabDetails = {
           provider: booking.cab,
-          pickupLocation: booking.from || request.from || '',
-          dropLocation: booking.to || request.to || '',
           pickupDateTime: startDate
         };
       }
@@ -292,6 +315,49 @@ export class ManagerRequestsComponent implements OnInit, AfterViewInit {
 
   formatDate(date: Date): string {
     return new Date(date).toLocaleDateString();
+  }
+
+  isTrue(value: any): boolean {
+    return value === true || String(value) === 'true';
+  }
+
+  hasPreferences(request: TravelRequest): boolean {
+    if (!request) return false;
+    // Check if any preference field is defined (more lenient check)
+    const hasAnyPreference = 
+      request.isDisabled !== undefined ||
+      request.disabilityDescription !== undefined ||
+      request.foodPreference !== undefined ||
+      request.specificFoodPreferences !== undefined ||
+      request.localTransportRequired !== undefined ||
+      request.driverPhoneNumber !== undefined ||
+      request.carModel !== undefined ||
+      request.carColor !== undefined ||
+      request.numberPlate !== undefined ||
+      request.hotelStarRating !== undefined ||
+      request.numberOfRooms !== undefined;
+    
+    if (!hasAnyPreference) return false;
+    
+    // Now check if any has a meaningful value
+    const hasHotelPref = request.hotelStarRating && 
+                         String(request.hotelStarRating).trim() && 
+                         String(request.hotelStarRating).trim() !== 'No Preference';
+    const isDisabled = request.isDisabled === true || String(request.isDisabled) === 'true';
+    const localTransportReq = request.localTransportRequired === true || String(request.localTransportRequired) === 'true';
+    return !!(
+      isDisabled ||
+      (request.disabilityDescription && String(request.disabilityDescription).trim()) ||
+      request.foodPreference ||
+      (request.specificFoodPreferences && String(request.specificFoodPreferences).trim()) ||
+      localTransportReq ||
+      (request.driverPhoneNumber && String(request.driverPhoneNumber).trim()) ||
+      (request.carModel && String(request.carModel).trim()) ||
+      (request.carColor && String(request.carColor).trim()) ||
+      (request.numberPlate && String(request.numberPlate).trim()) ||
+      hasHotelPref ||
+      (request.numberOfRooms !== undefined && request.numberOfRooms !== null && Number(request.numberOfRooms) > 0)
+    );
   }
 
   openNewRequestDialog(): void {

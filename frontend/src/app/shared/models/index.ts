@@ -23,7 +23,8 @@ export enum TravelType {
 // Transport mode
 export enum TransportMode {
   FLIGHT = 'FLIGHT',
-  TRAIN = 'TRAIN'
+  TRAIN = 'TRAIN',
+  BUS = 'BUS'
 }
 
 // User document interface
@@ -68,6 +69,18 @@ export interface TravelRequest {
   managerComment?: string;
   idProofUrl?: string;
   passportUrl?: string;
+  isDisabled?: boolean;
+  disabilityDescription?: string;
+  foodPreference?: 'VEG' | 'NON_VEG';
+  specificFoodPreferences?: string;
+  localTransportRequired?: boolean;
+  numberOfSeats?: number;
+  driverPhoneNumber?: string;
+  carModel?: string;
+  carColor?: string;
+  numberPlate?: string;
+  hotelStarRating?: string;
+  numberOfRooms?: number;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -192,18 +205,31 @@ export interface ItineraryData {
   // 4. Cab / Local Transport Details
   cabDetails?: {
     provider: string;
-    pickupLocation: string;
-    dropLocation: string;
     pickupDateTime: Date;
     driverName?: string;
     driverContact?: string;
     vehicleNumber?: string;
+    carModel?: string;
+    carColor?: string;
   };
 
   // Legacy fields for backward compatibility
   from?: string;
   to?: string;
   itineraryHtml?: string;
+  
+  // Additional Preferences
+  isDisabled?: boolean;
+  disabilityDescription?: string;
+  foodPreference?: 'VEG' | 'NON_VEG';
+  specificFoodPreferences?: string;
+  localTransportRequired?: boolean;
+  driverPhoneNumber?: string;
+  carModel?: string;
+  carColor?: string;
+  numberPlate?: string;
+  hotelStarRating?: string;
+  numberOfRooms?: number;
   
   // File attachments
   confirmationFiles?: Array<{

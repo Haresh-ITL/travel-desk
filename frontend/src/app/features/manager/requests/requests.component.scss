@@ -83,6 +83,10 @@
       background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%);
     }
 
+    &.approved {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    }
+
     &.booked {
       background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
     }
@@ -153,8 +157,18 @@
     color: white !important;
   }
 
+  .status-chip-approved {
+    background-color: #10b981 !important;
+    color: white !important;
+  }
+
   .status-chip-booked {
     background-color: #2563eb !important;
+    color: white !important;
+  }
+
+  .status-chip-rejected {
+    background-color: #ef4444 !important;
     color: white !important;
   }
 }
@@ -278,6 +292,21 @@
         font-size: 13px;
         font-weight: 600;
       }
+    }
+  }
+
+  .preferences-section {
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 2px solid #e5e7eb;
+
+    .section-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #1f2937;
+      margin-bottom: 16px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #e5e7eb;
     }
   }
 }

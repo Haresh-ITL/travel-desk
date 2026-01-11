@@ -46,6 +46,18 @@ async function formatTravelRequest(tr: any) {
     managerComment: tr.managerComment,
     idProofUrl: tr.idProofUrl,
     passportUrl: tr.passportUrl,
+    isDisabled: tr.isDisabled,
+    disabilityDescription: tr.disabilityDescription,
+    foodPreference: tr.foodPreference,
+    specificFoodPreferences: tr.specificFoodPreferences,
+    localTransportRequired: tr.localTransportRequired,
+    numberOfSeats: tr.numberOfSeats,
+    driverPhoneNumber: tr.driverPhoneNumber,
+    carModel: tr.carModel,
+    carColor: tr.carColor,
+    numberPlate: tr.numberPlate,
+    hotelStarRating: tr.hotelStarRating,
+    numberOfRooms: tr.numberOfRooms,
     createdAt: tr.createdAt,
     updatedAt: tr.updatedAt
   };
@@ -62,8 +74,44 @@ employeeRouter.post(
   ]),
   async (req, res) => {
     try {
-      const { from, to, travelType, startDate, endDate, purpose, primaryManagerUuid, managerId, modeOfTransport } =
-        req.body;
+      const { 
+        from, 
+        to, 
+        travelType, 
+        startDate, 
+        endDate, 
+        purpose, 
+        primaryManagerUuid, 
+        managerId, 
+        modeOfTransport,
+        isDisabled,
+        disabilityDescription,
+        foodPreference,
+        specificFoodPreferences,
+        localTransportRequired,
+        numberOfSeats,
+        driverPhoneNumber,
+        carModel,
+        carColor,
+        numberPlate,
+        hotelStarRating,
+        numberOfRooms
+      } = req.body;
+      
+      // Log received preference data for debugging
+      console.log('=== Employee POST /requests - Received Preference Data ===');
+      console.log('isDisabled:', isDisabled, typeof isDisabled);
+      console.log('disabilityDescription:', disabilityDescription);
+      console.log('foodPreference:', foodPreference);
+      console.log('specificFoodPreferences:', specificFoodPreferences);
+      console.log('localTransportRequired:', localTransportRequired, typeof localTransportRequired);
+      console.log('driverPhoneNumber:', driverPhoneNumber);
+      console.log('carModel:', carModel);
+      console.log('carColor:', carColor);
+      console.log('numberPlate:', numberPlate);
+      console.log('hotelStarRating:', hotelStarRating);
+      console.log('numberOfRooms:', numberOfRooms, typeof numberOfRooms);
+      console.log('==========================================================');
       
       // Support both managerId (from frontend) and primaryManagerUuid
       const managerUuid = primaryManagerUuid || managerId;
@@ -72,6 +120,52 @@ employeeRouter.post(
       const filePaths = files.files?.map((f) => f.path) || [];
       const idProofFile = files.idProof?.[0];
       const passportFile = files.passport?.[0];
+
+      // Handle preference fields - preserve empty strings if provided, but allow undefined
+      const preferenceData: any = {
+        isDisabled: isDisabled === 'true' || isDisabled === true || false,
+        localTransportRequired: localTransportRequired === 'true' || localTransportRequired === true || false
+      };
+      
+      // Handle numberOfSeats - convert to number if provided
+      if (numberOfSeats !== undefined && numberOfSeats !== null && numberOfSeats !== '') {
+        preferenceData.numberOfSeats = parseInt(numberOfSeats.toString(), 10) || 1;
+      }
+
+      // Only set string fields if they exist (not undefined/null), but allow empty strings
+      if (disabilityDescription !== undefined && disabilityDescription !== null) {
+        preferenceData.disabilityDescription = disabilityDescription;
+      }
+      if (foodPreference !== undefined && foodPreference !== null && foodPreference !== '') {
+        preferenceData.foodPreference = foodPreference;
+      }
+      if (specificFoodPreferences !== undefined && specificFoodPreferences !== null) {
+        preferenceData.specificFoodPreferences = specificFoodPreferences;
+      }
+      if (driverPhoneNumber !== undefined && driverPhoneNumber !== null) {
+        preferenceData.driverPhoneNumber = driverPhoneNumber;
+      }
+      if (carModel !== undefined && carModel !== null) {
+        preferenceData.carModel = carModel;
+      }
+      if (carColor !== undefined && carColor !== null) {
+        preferenceData.carColor = carColor;
+      }
+      if (numberPlate !== undefined && numberPlate !== null) {
+        preferenceData.numberPlate = numberPlate;
+      }
+      if (hotelStarRating !== undefined && hotelStarRating !== null && hotelStarRating !== '') {
+        preferenceData.hotelStarRating = hotelStarRating;
+      }
+      if (numberOfRooms !== undefined && numberOfRooms !== null) {
+        preferenceData.numberOfRooms = numberOfRooms ? parseInt(String(numberOfRooms)) : 1;
+      } else {
+        preferenceData.numberOfRooms = 1;
+      }
+
+      console.log('=== Processed Preference Data to Save ===');
+      console.log(JSON.stringify(preferenceData, null, 2));
+      console.log('========================================');
 
       const tr = await TravelRequest.create({
         uuid: uuid(),
@@ -87,12 +181,28 @@ employeeRouter.post(
         filePaths,
         idProofUrl: idProofFile?.path,
         passportUrl: passportFile?.path,
-        status: "PENDING"
+        status: "PENDING",
+        ...preferenceData
       });
+
+      console.log('=== Saved Travel Request ===');
+      console.log('isDisabled:', tr.isDisabled);
+      console.log('disabilityDescription:', tr.disabilityDescription);
+      console.log('foodPreference:', tr.foodPreference);
+      console.log('specificFoodPreferences:', tr.specificFoodPreferences);
+      console.log('localTransportRequired:', tr.localTransportRequired);
+      console.log('driverPhoneNumber:', tr.driverPhoneNumber);
+      console.log('carModel:', tr.carModel);
+      console.log('carColor:', tr.carColor);
+      console.log('numberPlate:', tr.numberPlate);
+      console.log('hotelStarRating:', tr.hotelStarRating);
+      console.log('numberOfRooms:', tr.numberOfRooms);
+      console.log('===========================');
 
       const formatted = await formatTravelRequest(tr);
       res.json(formatted);
     } catch (error) {
+      console.error('Error creating travel request:', error);
       res.status(500).json({ message: "Failed to create travel request" });
     }
   }
@@ -112,6 +222,24 @@ employeeRouter.get(
       console.log('Found', list.length, 'requests for employee', employeeUuid);
       
       const formatted = await Promise.all(list.map(formatTravelRequest));
+      
+      // Log preference data from first request for debugging
+      if (formatted.length > 0) {
+        console.log('=== GET /requests - First Request Preference Data ===');
+        const firstReq = formatted[0];
+        console.log('isDisabled:', firstReq.isDisabled);
+        console.log('disabilityDescription:', firstReq.disabilityDescription);
+        console.log('foodPreference:', firstReq.foodPreference);
+        console.log('specificFoodPreferences:', firstReq.specificFoodPreferences);
+        console.log('localTransportRequired:', firstReq.localTransportRequired);
+        console.log('driverPhoneNumber:', firstReq.driverPhoneNumber);
+        console.log('carModel:', firstReq.carModel);
+        console.log('carColor:', firstReq.carColor);
+        console.log('numberPlate:', firstReq.numberPlate);
+        console.log('hotelStarRating:', firstReq.hotelStarRating);
+        console.log('numberOfRooms:', firstReq.numberOfRooms);
+        console.log('=====================================================');
+      }
       
       // Log status counts for debugging
       const statusCounts = {

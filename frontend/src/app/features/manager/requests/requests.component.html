@@ -17,13 +17,13 @@
         <div class="status-label">Total</div>
       </div>
     </div>
-    <div class="status-card" (click)="filterByStatus(RequestStatus.PENDING)">
-      <div class="status-icon pending">
-        <mat-icon>schedule</mat-icon>
+    <div class="status-card" (click)="filterByStatus(RequestStatus.APPROVED)">
+      <div class="status-icon approved">
+        <mat-icon>check_circle</mat-icon>
       </div>
       <div class="status-info">
-        <div class="status-count">{{ statusCounts.PENDING }}</div>
-        <div class="status-label">Pending</div>
+        <div class="status-count">{{ statusCounts.APPROVED }}</div>
+        <div class="status-label">Approved</div>
       </div>
     </div>
     <div class="status-card" (click)="filterByStatus(RequestStatus.BOOKED)">
@@ -156,6 +156,60 @@
             <span class="label">Comment:</span>
             <span class="value">{{ selectedRequest.managerComment }}</span>
           </div>
+          
+          <!-- Additional Preferences Section -->
+          <div class="preferences-section" *ngIf="hasPreferences(selectedRequest)">
+            <h3 class="section-title">Additional Preferences</h3>
+            
+            <div class="detail-item" *ngIf="isTrue(selectedRequest.isDisabled)">
+              <span class="label">Disability Status:</span>
+              <span class="value">Yes</span>
+            </div>
+            <div class="detail-item" *ngIf="isTrue(selectedRequest.isDisabled) && selectedRequest.disabilityDescription">
+              <span class="label">Disability Description:</span>
+              <span class="value">{{ selectedRequest.disabilityDescription }}</span>
+            </div>
+            
+            <div class="detail-item" *ngIf="selectedRequest.foodPreference">
+              <span class="label">Food Preference:</span>
+              <span class="value">{{ selectedRequest.foodPreference === 'VEG' ? 'Vegetarian' : 'Non-Vegetarian' }}</span>
+            </div>
+            <div class="detail-item" *ngIf="selectedRequest.specificFoodPreferences && selectedRequest.specificFoodPreferences.trim()">
+              <span class="label">Specific Food Preferences:</span>
+              <span class="value">{{ selectedRequest.specificFoodPreferences }}</span>
+            </div>
+            
+            <div class="detail-item" *ngIf="isTrue(selectedRequest.localTransportRequired)">
+              <span class="label">Local Transport Required:</span>
+              <span class="value">Yes</span>
+            </div>
+            <div class="detail-item" *ngIf="isTrue(selectedRequest.localTransportRequired) && selectedRequest.driverPhoneNumber">
+              <span class="label">Driver Phone Number:</span>
+              <span class="value">{{ selectedRequest.driverPhoneNumber }}</span>
+            </div>
+            <div class="detail-item" *ngIf="isTrue(selectedRequest.localTransportRequired) && selectedRequest.carModel">
+              <span class="label">Car Model:</span>
+              <span class="value">{{ selectedRequest.carModel }}</span>
+            </div>
+            <div class="detail-item" *ngIf="isTrue(selectedRequest.localTransportRequired) && selectedRequest.carColor">
+              <span class="label">Car Color:</span>
+              <span class="value">{{ selectedRequest.carColor }}</span>
+            </div>
+            <div class="detail-item" *ngIf="isTrue(selectedRequest.localTransportRequired) && selectedRequest.numberPlate">
+              <span class="label">Number Plate:</span>
+              <span class="value">{{ selectedRequest.numberPlate }}</span>
+            </div>
+            
+            <div class="detail-item" *ngIf="selectedRequest.hotelStarRating && selectedRequest.hotelStarRating.trim() && selectedRequest.hotelStarRating.trim() !== 'No Preference'">
+              <span class="label">Hotel Star Rating:</span>
+              <span class="value">{{ selectedRequest.hotelStarRating }} Star</span>
+            </div>
+            <div class="detail-item" *ngIf="selectedRequest.numberOfRooms && selectedRequest.numberOfRooms > 0">
+              <span class="label">Number of Rooms:</span>
+              <span class="value">{{ selectedRequest.numberOfRooms }}</span>
+            </div>
+          </div>
+          
           <div class="detail-item">
             <span class="label">Status:</span>
             <span class="value">

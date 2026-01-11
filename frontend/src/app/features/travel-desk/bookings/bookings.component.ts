@@ -11,6 +11,8 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
 import { TravelDeskService } from '../../../core/services/travel-desk.service';
 import { TravelRequest, RequestStatus, TransportMode, BookingWithDetails, AllBookingsResponse } from '../../../shared/models';
 import { ItineraryViewerComponent } from '../../../shared/components/itinerary-viewer/itinerary-viewer.component';
@@ -31,7 +33,9 @@ import { EmployeeService } from '../../../core/services/employee.service';
     MatChipsModule,
     MatTooltipModule,
     MatTabsModule,
-    MatDialogModule
+    MatDialogModule,
+    MatFormFieldModule,
+    MatInputModule
   ],
   templateUrl: './bookings.component.html',
   styleUrls: ['./bookings.component.scss']
@@ -51,10 +55,30 @@ export class BookingsComponent implements OnInit {
   editingRequest: TravelRequest | null = null;
   selectedFiles: File[] = [];
   
+  // Booking details to be entered by travel admin
+  hotelName: string = '';
+  hotelRoomNumbers: string = '';
+  driverName: string = '';
+  driverPhoneNumber: string = '';
+  carModel: string = '';
+  carColor: string = '';
+  numberPlate: string = '';
+  
   // Edit Booking Files
   editingBooking: BookingWithDetails | null = null;
   existingFiles: Array<{ fileName: string; base64?: string; mimeType?: string; url?: string; index?: number }> = [];
   newFiles: File[] = [];
+  
+  // User profile documents
+  userDocuments: Array<{
+    type: string;
+    url?: string;
+    data?: string;
+    mimeType?: string;
+    fileName?: string;
+    uploadedAt?: Date;
+  }> = [];
+  loadingDocuments = false;
 
   RequestStatus = RequestStatus;
   TransportMode = TransportMode;
@@ -125,6 +149,49 @@ export class BookingsComponent implements OnInit {
     return new Date(date).toLocaleString();
   }
 
+  isTrue(value: any): boolean {
+    return value === true || String(value) === 'true';
+  }
+
+  hasPreferences(request: TravelRequest): boolean {
+    if (!request) return false;
+    // Check if any preference field is defined (more lenient check)
+    const hasAnyPreference = 
+      request.isDisabled !== undefined ||
+      request.disabilityDescription !== undefined ||
+      request.foodPreference !== undefined ||
+      request.specificFoodPreferences !== undefined ||
+      request.localTransportRequired !== undefined ||
+      request.driverPhoneNumber !== undefined ||
+      request.carModel !== undefined ||
+      request.carColor !== undefined ||
+      request.numberPlate !== undefined ||
+      request.hotelStarRating !== undefined ||
+      request.numberOfRooms !== undefined;
+    
+    if (!hasAnyPreference) return false;
+    
+    // Now check if any has a meaningful value
+    const hasHotelPref = request.hotelStarRating && 
+                         String(request.hotelStarRating).trim() && 
+                         String(request.hotelStarRating).trim() !== 'No Preference';
+    const isDisabled = request.isDisabled === true || String(request.isDisabled) === 'true';
+    const localTransportReq = request.localTransportRequired === true || String(request.localTransportRequired) === 'true';
+    return !!(
+      isDisabled ||
+      (request.disabilityDescription && String(request.disabilityDescription).trim()) ||
+      request.foodPreference ||
+      (request.specificFoodPreferences && String(request.specificFoodPreferences).trim()) ||
+      localTransportReq ||
+      (request.driverPhoneNumber && String(request.driverPhoneNumber).trim()) ||
+      (request.carModel && String(request.carModel).trim()) ||
+      (request.carColor && String(request.carColor).trim()) ||
+      (request.numberPlate && String(request.numberPlate).trim()) ||
+      hasHotelPref ||
+      (request.numberOfRooms !== undefined && request.numberOfRooms !== null && Number(request.numberOfRooms) > 0)
+    );
+  }
+
   getStatusChipClass(status: RequestStatus): string {
     switch (status) {
       case RequestStatus.PENDING:
@@ -142,11 +209,108 @@ export class BookingsComponent implements OnInit {
 
   getTransportIcon(mode?: TransportMode): string {
     if (!mode) return 'flight';
-    return mode === TransportMode.FLIGHT ? 'flight' : 'train';
+    switch (mode) {
+      case TransportMode.FLIGHT:
+        return 'flight';
+      case TransportMode.TRAIN:
+        return 'train';
+      case TransportMode.BUS:
+        return 'directions_bus';
+      default:
+        return 'flight';
+    }
   }
 
   editRequest(request: TravelRequest): void {
     this.editingRequest = { ...request };
+    // Reset form fields
+    this.hotelName = '';
+    this.hotelRoomNumbers = '';
+    this.driverName = '';
+    this.driverPhoneNumber = '';
+    this.carModel = '';
+    this.carColor = '';
+    this.numberPlate = '';
+    this.userDocuments = [];
+    
+    // Fetch user documents (profile files) for this employee/manager
+    if (request.employeeUuid) {
+      this.loadUserDocuments(request.employeeUuid);
+    }
+  }
+  
+  loadUserDocuments(employeeUuid: string): void {
+    this.loadingDocuments = true;
+    this.travelDeskService.getUserDocuments(employeeUuid).subscribe({
+      next: (response) => {
+        this.userDocuments = response.documents || [];
+        this.loadingDocuments = false;
+      },
+      error: (error) => {
+        console.error('Error loading user documents:', error);
+        this.userDocuments = [];
+        this.loadingDocuments = false;
+        // Don't show error to user, just log it
+      }
+    });
+  }
+  
+  downloadDocument(doc: { type: string; data?: string; fileName?: string; mimeType?: string; url?: string }): void {
+    if (doc.data) {
+      // Handle base64 data
+      const base64Data = doc.data.includes(',') ? doc.data.split(',')[1] : doc.data;
+      const byteCharacters = atob(base64Data);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
+      const blob = new Blob([byteArray], { type: doc.mimeType || 'application/octet-stream' });
+      
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = doc.fileName || `${doc.type}_${Date.now()}.${doc.mimeType?.split('/')[1] || 'file'}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } else if (doc.url) {
+      // Handle URL
+      window.open(doc.url, '_blank');
+    }
+  }
+  
+  viewDocument(doc: { type: string; data?: string; fileName?: string; mimeType?: string; url?: string }): void {
+    if (doc.data) {
+      // Open in new window/tab
+      const base64Data = doc.data.includes(',') ? doc.data : `data:${doc.mimeType || 'application/octet-stream'};base64,${doc.data}`;
+      const newWindow = window.open();
+      if (newWindow) {
+        newWindow.document.write(`<iframe src="${base64Data}" style="width:100%;height:100%;border:none;"></iframe>`);
+      }
+    } else if (doc.url) {
+      window.open(doc.url, '_blank');
+    }
+  }
+  
+  getDocumentIcon(mimeType?: string): string {
+    if (!mimeType) return 'insert_drive_file';
+    if (mimeType.startsWith('image/')) return 'image';
+    if (mimeType.startsWith('application/pdf')) return 'picture_as_pdf';
+    if (mimeType.includes('word')) return 'description';
+    if (mimeType.includes('excel') || mimeType.includes('spreadsheet')) return 'table_chart';
+    return 'insert_drive_file';
+  }
+  
+  getDocumentTypeLabel(type: string): string {
+    const labels: { [key: string]: string } = {
+      'ID_PROOF': 'ID Proof',
+      'PASSPORT': 'Passport',
+      'VISA': 'Visa',
+      'OTHER': 'Other Document'
+    };
+    return labels[type] || type;
   }
 
   async saveRequest(): Promise<void> {
@@ -173,12 +337,42 @@ export class BookingsComponent implements OnInit {
       }
     }
     
+    // Prepare hotel details if hotel name is provided
+    let hotelDetails: any = undefined;
+    if (this.hotelName && this.hotelName.trim()) {
+      hotelDetails = {
+        name: this.hotelName.trim(),
+        roomNumber: this.hotelRoomNumbers.trim() || '',
+        location: this.editingRequest.to || '',
+        phoneNumber: '' // Can be added later if needed
+      };
+    }
+
+    // Prepare cab details if driver name is provided (only if local transport is required)
+    let cabDetails: any = undefined;
+    if (this.editingRequest.localTransportRequired && this.driverName && this.driverName.trim()) {
+      cabDetails = {
+        name: this.carModel ? `${this.carModel}${this.carColor ? ` (${this.carColor})` : ''}`.trim() : 'Local Transport',
+        driverName: this.driverName.trim(),
+        phoneNumber: this.driverPhoneNumber.trim() || '',
+        carModel: this.carModel.trim() || '',
+        carColor: this.carColor.trim() || '',
+        numberPlate: this.numberPlate.trim() || ''
+      };
+    }
+
     // Use the new booking creation endpoint (POST /bookings)
     this.travelDeskService.createBookingForRequest(
       this.editingRequest.uuid,
       {
         itineraryHtml: "", // Can be updated later via PUT /bookings/:uuid
-        confirmationFiles: confirmationFiles
+        confirmationFiles: confirmationFiles,
+        hotel: hotelDetails,
+        cab: cabDetails,
+        driverPhoneNumber: this.driverPhoneNumber.trim() || '',
+        carModel: this.carModel.trim() || '',
+        carColor: this.carColor.trim() || '',
+        numberPlate: this.numberPlate.trim() || ''
       }
     ).subscribe({
       next: (booking: BookingWithDetails) => {
@@ -244,6 +438,13 @@ export class BookingsComponent implements OnInit {
   cancelEdit(): void {
     this.editingRequest = null;
     this.selectedFiles = [];
+    this.hotelName = '';
+    this.hotelRoomNumbers = '';
+    this.driverName = '';
+    this.driverPhoneNumber = '';
+    this.carModel = '';
+    this.carColor = '';
+    this.numberPlate = '';
   }
 
   onFileSelected(event: Event): void {
@@ -314,6 +515,18 @@ export class BookingsComponent implements OnInit {
       endDate: request.endDate ? new Date(request.endDate) : new Date(),
       from: booking.from || request.from || '',
       to: booking.to || request.to || '',
+      // Additional Preferences
+      isDisabled: request.isDisabled,
+      disabilityDescription: request.disabilityDescription,
+      foodPreference: request.foodPreference,
+      specificFoodPreferences: request.specificFoodPreferences,
+      localTransportRequired: request.localTransportRequired,
+      driverPhoneNumber: request.driverPhoneNumber,
+      carModel: request.carModel,
+      carColor: request.carColor,
+      numberPlate: request.numberPlate,
+      hotelStarRating: request.hotelStarRating,
+      numberOfRooms: request.numberOfRooms,
       // Parse flight details
       outboundJourney: booking.flight ? {
         transportType: 'FLIGHT' as const,
@@ -336,11 +549,12 @@ export class BookingsComponent implements OnInit {
       // Parse cab details
       cabDetails: booking.cab ? {
         provider: typeof booking.cab === 'string' ? booking.cab : (booking.cab as any).name || '',
-        pickupLocation: booking.from || request.from || '',
-        dropLocation: booking.to || request.to || '',
         pickupDateTime: request.startDate ? new Date(request.startDate) : new Date(),
         driverName: typeof booking.cab === 'object' ? (booking.cab as any).driverName : undefined,
-        driverContact: typeof booking.cab === 'object' ? (booking.cab as any).phoneNumber : undefined
+        driverContact: typeof booking.cab === 'object' ? (booking.cab as any).phoneNumber : request.driverPhoneNumber || undefined,
+        vehicleNumber: typeof booking.cab === 'object' ? (booking.cab as any).numberPlate : request.numberPlate || undefined,
+        carModel: typeof booking.cab === 'object' ? (booking.cab as any).carModel : request.carModel || undefined,
+        carColor: typeof booking.cab === 'object' ? (booking.cab as any).carColor : request.carColor || undefined
       } : undefined,
       // Include confirmation files
       confirmationFiles: booking.confirmationFiles || [],

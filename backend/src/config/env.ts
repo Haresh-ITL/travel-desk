@@ -17,5 +17,11 @@ export const env = {
   // llama-3.1-sonar-large-128k-online, llama-3.1-sonar-huge-128k-online, 
   // llama-3.1-sonar-small-128k-online, sonar-small-online, sonar-medium-online, sonar-large-online
   perplexityApiKey: (process.env.PERPLEXITY_API_KEY || "").trim(),
-  perplexityModel: (process.env.PERPLEXITY_MODEL || "sonar-pro").trim()
+  perplexityModel: (process.env.PERPLEXITY_MODEL || "sonar-pro").trim(),
+  // Email Configuration
+  smtpHost: process.env.SMTP_HOST || "smtp.gmail.com",
+  smtpPort: Number(process.env.SMTP_PORT) || 587,
+  smtpUser: process.env.SMTP_USER || "",
+  smtpPassword: process.env.SMTP_PASSWORD || "",
+  smtpFrom: process.env.SMTP_FROM || process.env.SMTP_USER || "noreply@traveldesk.com"
 };

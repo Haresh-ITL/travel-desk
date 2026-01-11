@@ -92,6 +92,18 @@ export interface BookingWithDetails {
     status: string;
     createdAt: string | Date;
     filePaths?: string[];
+    isDisabled?: boolean;
+    disabilityDescription?: string;
+    foodPreference?: 'VEG' | 'NON_VEG';
+    specificFoodPreferences?: string;
+    localTransportRequired?: boolean;
+    numberOfSeats?: number;
+    driverPhoneNumber?: string;
+    carModel?: string;
+    carColor?: string;
+    numberPlate?: string;
+    hotelStarRating?: string;
+    numberOfRooms?: number;
   };
 }
 
